@@ -35,6 +35,7 @@ class Particle {
 class ParticleSystem {
   constructor() {
     this.particles = [];
+    this.textPopups = [];
   }
 
   createExplosion(x, y, count = 20, color = '#ff6600') {
@@ -60,19 +61,51 @@ class ParticleSystem {
       this.particles.push(new Particle(x, y, dx, dy, color, lifetime));
     }
   }
+  
+  createTextPopup(x, y, text, color = '#ffff00') {
+    this.textPopups.push({
+      x: x,
+      y: y,
+      text: text,
+      color: color,
+      lifetime: 1000,
+      maxLifetime: 1000,
+      dy: -1,
+      active: true
+    });
+  }
 
   update(deltaTime) {
     this.particles = this.particles.filter(p => {
       p.update(deltaTime);
       return p.active;
     });
+    
+    this.textPopups = this.textPopups.filter(t => {
+      t.y += t.dy * deltaTime / 16;
+      t.lifetime -= deltaTime;
+      if (t.lifetime <= 0) {
+        t.active = false;
+      }
+      return t.active;
+    });
   }
 
   render(ctx) {
     this.particles.forEach(p => p.render(ctx));
+    
+    this.textPopups.forEach(t => {
+      const alpha = t.lifetime / t.maxLifetime;
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = t.color;
+      ctx.font = 'bold 16px monospace';
+      ctx.fillText(t.text, t.x, t.y);
+      ctx.globalAlpha = 1;
+    });
   }
 
   clear() {
     this.particles = [];
+    this.textPopups = [];
   }
 }

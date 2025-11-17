@@ -150,9 +150,20 @@ class GameEngine {
     
     this.enemiesRemaining = enemyCount;
     
+    // Determine enemy type distribution based on wave
+    let types = ['infantry', 'infantry', 'scout']; // Early waves
+    if (this.wave >= 3) {
+      types.push('heavy');
+    }
+    if (this.wave >= 5) {
+      types.push('sniper');
+    }
+    if (this.wave >= 7) {
+      types.push('heavy', 'sniper'); // More elite units
+    }
+    
     for (let i = 0; i < enemyCount; i++) {
       const x = this.player.x + 400 + Math.random() * 1000;
-      const types = ['infantry', 'heavy', 'scout', 'sniper'];
       const type = types[Math.floor(Math.random() * types.length)];
       
       const enemy = new EnemyUnit(x, this.groundLevel - 48, type);
@@ -378,6 +389,10 @@ class GameEngine {
     
     if (this.mode === 'survival') {
       if (this.enemiesRemaining === 0) {
+        // Wave clear bonus
+        const waveBonus = this.wave * 500;
+        this.score += waveBonus;
+        
         this.wave++;
         this.spawnWave();
         this.spawnPickups();
@@ -418,15 +433,38 @@ class GameEngine {
               this.combo++;
               this.comboTimer = this.currentTime;
               const comboBonus = Math.min(this.combo, 10) * 10; // Max 100 bonus points at 10x combo
-              this.score += 100 + comboBonus;
+              const totalPoints = 100 + comboBonus;
+              this.score += totalPoints;
               
               this.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2
               );
               
+              // Show score popup
+              let popupText = `+${totalPoints}`;
+              let popupColor = '#ffff00';
+              if (this.combo > 1) {
+                popupText += ` (${this.combo}x)`;
+                popupColor = '#ff6600';
+              }
+              this.particleSystem.createTextPopup(
+                enemy.x + enemy.width / 2,
+                enemy.y - 20,
+                popupText,
+                popupColor
+              );
+              
               // Always spawn pickup when enemy is killed
-              const pickupTypes = ['health', 'ammo', 'healing', 'damage_boost'];
+              // Common drops (80% chance)
+              let pickupTypes = ['health', 'ammo', 'healing', 'damage_boost'];
+              
+              // Add rare weapon drops (20% chance for elite enemies)
+              if ((enemy.enemyType === 'heavy' || enemy.enemyType === 'sniper') && Math.random() < 0.2) {
+                const weaponDrops = ['weapon_rifle', 'weapon_shotgun', 'weapon_machinegun'];
+                pickupTypes = weaponDrops;
+              }
+              
               const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
               const pickup = new Pickup(enemy.x, enemy.y, type);
               this.pickups.push(pickup);
