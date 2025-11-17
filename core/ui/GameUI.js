@@ -569,7 +569,10 @@ class GameUI {
       if (window.game) {
         ctx.fillStyle = '#00ff00';
         ctx.font = '16px monospace';
-        const playTime = ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
+        // Use finalPlayTime if available (captured at death), otherwise calculate live
+        const playTime = window.game.finalPlayTime !== undefined ? 
+          (window.game.finalPlayTime / 1000).toFixed(1) :
+          ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
         ctx.fillText(`Play Time: ${playTime}s`, this.width / 2, 210);
         ctx.fillText(`Kills: ${window.game.kills}`, this.width / 2, 235);
         ctx.fillText(`Max Combo: ${window.game.maxCombo}x`, this.width / 2, 260);
@@ -598,7 +601,10 @@ class GameUI {
       if (window.game) {
         ctx.fillStyle = '#00ff00';
         ctx.font = '16px monospace';
-        const playTime = ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
+        // Use finalPlayTime if available (captured at victory), otherwise calculate live
+        const playTime = window.game.finalPlayTime !== undefined ? 
+          (window.game.finalPlayTime / 1000).toFixed(1) :
+          ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
         ctx.fillText(`Play Time: ${playTime}s`, this.width / 2, 210);
         ctx.fillText(`Kills: ${window.game.kills}`, this.width / 2, 235);
         ctx.fillText(`Max Combo: ${window.game.maxCombo}x`, this.width / 2, 260);

@@ -476,9 +476,12 @@ class GameEngine {
     if (this.player && this.player.active) {
       this.player.update(deltaTime, this.inputManager, this.groundLevel, this.currentTime, this.worldWidth);
     } else if (this.player && !this.player.active) {
-      // Player died - save high score
+      // Player died - save high score and capture final play time
       const accuracy = this.shotsFired > 0 ? 
         ((this.shotsHit / this.shotsFired) * 100).toFixed(1) : 0;
+      
+      // Capture final play time
+      this.finalPlayTime = this.currentTime - this.gameStartTime;
       
       if (this.highScoreSystem.isHighScore(this.score)) {
         this.highScoreSystem.addScore(this.score, this.selectedCharacter, this.difficulty, this.mode, {
@@ -559,6 +562,9 @@ class GameEngine {
       }
     } else if (this.mode === 'campaign') {
       if (this.enemiesRemaining === 0) {
+        // Capture final play time
+        this.finalPlayTime = this.currentTime - this.gameStartTime;
+        
         this.state = 'victory';
         this.menuState = 'victory';
         this.ui.setLastScore(this.score);
