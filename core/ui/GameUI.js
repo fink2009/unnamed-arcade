@@ -408,9 +408,10 @@ class GameUI {
         ctx.fillText('DIFFICULTY:', this.width / 2, 190);
         
         const difficulties = [
-          { key: '1', name: 'EASY', value: 'easy' },
-          { key: '2', name: 'MEDIUM', value: 'medium' },
-          { key: '3', name: 'EXTREME', value: 'extreme' }
+          { key: '1', name: 'BABY', value: 'baby' },
+          { key: '2', name: 'EASY', value: 'easy' },
+          { key: '3', name: 'MEDIUM', value: 'medium' },
+          { key: '4', name: 'EXTREME', value: 'extreme' }
         ];
         
         difficulties.forEach((diff, i) => {
@@ -423,19 +424,19 @@ class GameUI {
         
         ctx.fillStyle = '#00ff00';
         ctx.font = '18px monospace';
-        ctx.fillText('AUDIO:', this.width / 2, 330);
+        ctx.fillText('AUDIO:', this.width / 2, 360);
         const audioStatus = window.game && window.game.audioEnabled ? 'ON' : 'OFF';
         ctx.font = '16px monospace';
-        ctx.fillText(`4 - Toggle Audio [${audioStatus}]`, this.width / 2, 360);
+        ctx.fillText(`5 - Toggle Audio [${audioStatus}]`, this.width / 2, 390);
         
         const masterVol = window.game ? Math.round(window.game.masterVolume * 100) : 100;
-        ctx.fillText(`5/6 - Master Volume: ${masterVol}%`, this.width / 2, 390);
+        ctx.fillText(`6/7 - Master Volume: ${masterVol}%`, this.width / 2, 420);
         
         const sfxVol = window.game ? Math.round(window.game.sfxVolume * 100) : 80;
-        ctx.fillText(`7/8 - SFX Volume: ${sfxVol}%`, this.width / 2, 420);
+        ctx.fillText(`8/9 - SFX Volume: ${sfxVol}%`, this.width / 2, 450);
         
         const musicVol = window.game ? Math.round(window.game.musicVolume * 100) : 70;
-        ctx.fillText(`9/0 - Music Volume: ${musicVol}%`, this.width / 2, 450);
+        ctx.fillText(`0/- - Music Volume: ${musicVol}%`, this.width / 2, 480);
       }
       else if (page === 1) {
         // Page 1: Graphics & Display

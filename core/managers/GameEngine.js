@@ -10,7 +10,7 @@ class GameEngine {
     this.menuState = 'main';
     
     // Settings
-    this.difficulty = 'medium'; // easy, medium, extreme
+    this.difficulty = 'medium'; // baby, easy, medium, extreme
     this.audioEnabled = true;
     this.musicVolume = 0.7;
     
@@ -136,8 +136,11 @@ class GameEngine {
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
     
     // Apply difficulty modifiers to player
-    if (this.difficulty === 'easy') {
-      this.player.maxHealth = Math.floor(this.player.maxHealth * 2.5); // Increased from 1.5x to 2.5x
+    if (this.difficulty === 'baby') {
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 5); // Very high health for baby mode
+      this.player.health = this.player.maxHealth;
+    } else if (this.difficulty === 'easy') {
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 2.5);
       this.player.health = this.player.maxHealth;
     } else if (this.difficulty === 'extreme') {
       this.player.maxHealth = Math.floor(this.player.maxHealth * 0.7);
@@ -177,9 +180,12 @@ class GameEngine {
     let difficultyMultiplier = 1.0;
     
     // Apply difficulty modifiers
-    if (this.difficulty === 'easy') {
-      enemyCount = Math.floor(enemyCount * 0.4); // Reduced from 0.6 to 0.4
-      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
+    if (this.difficulty === 'baby') {
+      enemyCount = Math.max(1, Math.floor(enemyCount * 0.2)); // Very few enemies
+      difficultyMultiplier = 0.3; // Very weak enemies
+    } else if (this.difficulty === 'easy') {
+      enemyCount = Math.floor(enemyCount * 0.4);
+      difficultyMultiplier = 0.5;
     } else if (this.difficulty === 'extreme') {
       enemyCount = Math.floor(enemyCount * 1.5);
       difficultyMultiplier = 1.5;
@@ -225,9 +231,12 @@ class GameEngine {
     let difficultyMultiplier = 1.0;
     
     // Apply difficulty modifiers
-    if (this.difficulty === 'easy') {
-      enemyCount = 4; // Reduced from 6 to 4
-      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
+    if (this.difficulty === 'baby') {
+      enemyCount = 2; // Very few enemies for baby mode
+      difficultyMultiplier = 0.3;
+    } else if (this.difficulty === 'easy') {
+      enemyCount = 4;
+      difficultyMultiplier = 0.5;
     } else if (this.difficulty === 'extreme') {
       enemyCount = 15;
       difficultyMultiplier = 1.5;
@@ -284,24 +293,26 @@ class GameEngine {
       // Page 0: Difficulty & Audio
       if (this.settingsPage === 0) {
         if (this.inputManager.wasKeyPressed('1')) {
-          this.difficulty = 'easy';
+          this.difficulty = 'baby';
         } else if (this.inputManager.wasKeyPressed('2')) {
-          this.difficulty = 'medium';
+          this.difficulty = 'easy';
         } else if (this.inputManager.wasKeyPressed('3')) {
-          this.difficulty = 'extreme';
+          this.difficulty = 'medium';
         } else if (this.inputManager.wasKeyPressed('4')) {
-          this.audioEnabled = !this.audioEnabled;
+          this.difficulty = 'extreme';
         } else if (this.inputManager.wasKeyPressed('5')) {
-          this.masterVolume = Math.max(0, this.masterVolume - 0.1);
+          this.audioEnabled = !this.audioEnabled;
         } else if (this.inputManager.wasKeyPressed('6')) {
-          this.masterVolume = Math.min(1, this.masterVolume + 0.1);
+          this.masterVolume = Math.max(0, this.masterVolume - 0.1);
         } else if (this.inputManager.wasKeyPressed('7')) {
-          this.sfxVolume = Math.max(0, this.sfxVolume - 0.1);
+          this.masterVolume = Math.min(1, this.masterVolume + 0.1);
         } else if (this.inputManager.wasKeyPressed('8')) {
-          this.sfxVolume = Math.min(1, this.sfxVolume + 0.1);
+          this.sfxVolume = Math.max(0, this.sfxVolume - 0.1);
         } else if (this.inputManager.wasKeyPressed('9')) {
-          this.musicVolume = Math.max(0, this.musicVolume - 0.1);
+          this.sfxVolume = Math.min(1, this.sfxVolume + 0.1);
         } else if (this.inputManager.wasKeyPressed('0')) {
+          this.musicVolume = Math.max(0, this.musicVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('-')) {
           this.musicVolume = Math.min(1, this.musicVolume + 0.1);
         }
       }
