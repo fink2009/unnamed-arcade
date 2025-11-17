@@ -16,6 +16,15 @@ class Pickup extends Entity {
         this.color = '#ffff00';
         this.value = 50;
         break;
+      case 'damage_boost':
+        this.color = '#ff0000';
+        this.duration = 10000; // 10 seconds
+        this.damageMultiplier = 1.5;
+        break;
+      case 'healing':
+        this.color = '#00ffaa';
+        this.value = 15; // Smaller heal for procedural drops
+        break;
       case 'weapon_rifle':
         this.color = '#ff8800';
         this.weapon = new Rifle();
@@ -50,10 +59,27 @@ class Pickup extends Entity {
   apply(player) {
     switch (this.pickupType) {
       case 'health':
+      case 'healing':
         player.heal(this.value);
         break;
       case 'ammo':
         player.getCurrentWeapon().currentAmmo = player.getCurrentWeapon().ammoCapacity;
+        break;
+      case 'damage_boost':
+        // Store original damage values for all weapons
+        const originalDamages = player.weapons.map(w => w.damage);
+        player.weapons.forEach(w => {
+          w.damage = Math.floor(w.damage * this.damageMultiplier);
+        });
+        player.hasDamageBoost = true;
+        setTimeout(() => {
+          if (player.active) {
+            player.weapons.forEach((w, i) => {
+              w.damage = originalDamages[i];
+            });
+            player.hasDamageBoost = false;
+          }
+        }, this.duration);
         break;
       case 'weapon_rifle':
       case 'weapon_shotgun':
@@ -102,8 +128,9 @@ class Pickup extends Entity {
     ctx.textBaseline = 'middle';
     
     let symbol = '?';
-    if (this.pickupType === 'health') symbol = '+';
+    if (this.pickupType === 'health' || this.pickupType === 'healing') symbol = '+';
     else if (this.pickupType === 'ammo') symbol = 'A';
+    else if (this.pickupType === 'damage_boost') symbol = 'D';
     else if (this.pickupType.startsWith('weapon')) symbol = 'W';
     else if (this.pickupType.startsWith('powerup')) symbol = '*';
     

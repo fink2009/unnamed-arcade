@@ -82,6 +82,7 @@ class GameEngine {
     this.mode = mode;
     this.selectedCharacter = character;
     this.state = 'playing';
+    this.menuState = null; // Reset menu state to ensure game renders properly
     
     // Reset game state
     this.score = 0;
@@ -94,7 +95,7 @@ class GameEngine {
     
     // Apply difficulty modifiers to player
     if (this.difficulty === 'easy') {
-      this.player.maxHealth = Math.floor(this.player.maxHealth * 1.5);
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 2.5); // Increased from 1.5x to 2.5x
       this.player.health = this.player.maxHealth;
     } else if (this.difficulty === 'extreme') {
       this.player.maxHealth = Math.floor(this.player.maxHealth * 0.7);
@@ -127,8 +128,8 @@ class GameEngine {
     
     // Apply difficulty modifiers
     if (this.difficulty === 'easy') {
-      enemyCount = Math.floor(enemyCount * 0.6);
-      difficultyMultiplier = 0.7;
+      enemyCount = Math.floor(enemyCount * 0.4); // Reduced from 0.6 to 0.4
+      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
     } else if (this.difficulty === 'extreme') {
       enemyCount = Math.floor(enemyCount * 1.5);
       difficultyMultiplier = 1.5;
@@ -154,8 +155,8 @@ class GameEngine {
     
     // Apply difficulty modifiers
     if (this.difficulty === 'easy') {
-      enemyCount = 6;
-      difficultyMultiplier = 0.7;
+      enemyCount = 4; // Reduced from 6 to 4
+      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
     } else if (this.difficulty === 'extreme') {
       enemyCount = 15;
       difficultyMultiplier = 1.5;
@@ -400,14 +401,12 @@ class GameEngine {
                 enemy.y + enemy.height / 2
               );
               
-              // Chance to spawn pickup
-              if (Math.random() < 0.3) {
-                const pickupTypes = ['health', 'ammo'];
-                const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
-                const pickup = new Pickup(enemy.x, enemy.y, type);
-                this.pickups.push(pickup);
-                this.collisionSystem.add(pickup);
-              }
+              // Always spawn pickup when enemy is killed
+              const pickupTypes = ['health', 'ammo', 'healing', 'damage_boost'];
+              const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+              const pickup = new Pickup(enemy.x, enemy.y, type);
+              this.pickups.push(pickup);
+              this.collisionSystem.add(pickup);
             }
           }
         });
