@@ -19,6 +19,9 @@ class GameEngine {
     this.assetManager = new AssetManager();
     this.collisionSystem = new CollisionSystem();
     this.particleSystem = new ParticleSystem();
+    this.achievementSystem = new AchievementSystem();
+    this.audioManager = new AudioManager();
+    this.highScoreSystem = new HighScoreSystem();
     this.ui = new GameUI(canvas);
     
     // World settings
@@ -41,16 +44,43 @@ class GameEngine {
     this.enemiesRemaining = 0;
     this.waveTimer = 0;
     this.waveDuration = 30000; // 30 seconds per wave
+    this.combo = 0;
+    this.comboTimer = 0;
+    this.comboTimeout = 3000; // 3 seconds to maintain combo
+    this.maxCombo = 0;
+    this.totalDamageTaken = 0;
+    this.totalDamageDealt = 0;
+    this.shotsFired = 0;
+    this.shotsHit = 0;
+    this.playTime = 0;
+    this.bossesKilled = 0;
+    this.weaponsCollected = 0;
+    this.damageTakenThisWave = 0;
     
     // Timing
     this.lastTime = 0;
     this.currentTime = 0;
+    this.fps = 60;
+    this.fpsFrames = [];
+    this.fpsUpdateTime = 0;
     
     // Settings
     this.difficulty = 'medium'; // easy, medium, extreme
     this.audioEnabled = true;
+    this.masterVolume = 1.0;
+    this.sfxVolume = 0.8;
     this.musicVolume = 0.7;
     this.selectedCharacter = 'soldier';
+    this.screenShake = true;
+    this.particleQuality = 'high'; // low, medium, high
+    this.showFPS = false;
+    this.showHelp = false; // Toggle help overlay
+    this.cameraSmoothness = 0.1; // 0.05 = smooth, 0.3 = snappy
+    this.crosshairStyle = 'cross'; // cross, dot, circle, none
+    this.hudOpacity = 0.9;
+    this.colorBlindMode = 'none'; // none, protanopia, deuteranopia, tritanopia
+    this.autoReload = true;
+    this.settingsPage = 0; // For multi-page settings menu
     
     this.init();
   }
@@ -82,24 +112,45 @@ class GameEngine {
     this.mode = mode;
     this.selectedCharacter = character;
     this.state = 'playing';
+    this.menuState = null; // Reset menu state to ensure game renders properly
     
     // Reset game state
     this.score = 0;
     this.kills = 0;
     this.wave = 1;
     this.waveTimer = 0;
+    this.combo = 0;
+    this.comboTimer = 0;
+    this.maxCombo = 0;
+    this.totalDamageTaken = 0;
+    this.totalDamageDealt = 0;
+    this.shotsFired = 0;
+    this.shotsHit = 0;
+    this.playTime = 0;
+    this.bossesKilled = 0;
+    this.weaponsCollected = 0;
+    this.damageTakenThisWave = 0;
+    this.gameStartTime = performance.now();
     
     // Create player with difficulty modifiers
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
     
     // Apply difficulty modifiers to player
     if (this.difficulty === 'easy') {
-      this.player.maxHealth = Math.floor(this.player.maxHealth * 1.5);
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 2.5); // Increased from 1.5x to 2.5x
       this.player.health = this.player.maxHealth;
     } else if (this.difficulty === 'extreme') {
       this.player.maxHealth = Math.floor(this.player.maxHealth * 0.7);
       this.player.health = this.player.maxHealth;
     }
+    
+    // Add spawn protection to prevent instant death
+    this.player.invulnerable = true;
+    setTimeout(() => {
+      if (this.player && this.player.active) {
+        this.player.invulnerable = false;
+      }
+    }, 2000); // 2 seconds of spawn protection
     
     this.camera.follow(this.player);
     
@@ -127,8 +178,8 @@ class GameEngine {
     
     // Apply difficulty modifiers
     if (this.difficulty === 'easy') {
-      enemyCount = Math.floor(enemyCount * 0.6);
-      difficultyMultiplier = 0.7;
+      enemyCount = Math.floor(enemyCount * 0.4); // Reduced from 0.6 to 0.4
+      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
     } else if (this.difficulty === 'extreme') {
       enemyCount = Math.floor(enemyCount * 1.5);
       difficultyMultiplier = 1.5;
@@ -136,15 +187,36 @@ class GameEngine {
     
     this.enemiesRemaining = enemyCount;
     
+    // Determine enemy type distribution based on wave
+    let types = ['infantry', 'infantry', 'scout']; // Early waves
+    if (this.wave >= 3) {
+      types.push('heavy');
+    }
+    if (this.wave >= 5) {
+      types.push('sniper');
+    }
+    if (this.wave >= 7) {
+      types.push('heavy', 'sniper'); // More elite units
+    }
+    
     for (let i = 0; i < enemyCount; i++) {
       const x = this.player.x + 400 + Math.random() * 1000;
-      const types = ['infantry', 'heavy', 'scout', 'sniper'];
       const type = types[Math.floor(Math.random() * types.length)];
       
       const enemy = new EnemyUnit(x, this.groundLevel - 48, type);
       enemy.applyDifficulty(difficultyMultiplier);
       this.enemies.push(enemy);
       this.collisionSystem.add(enemy);
+    }
+    
+    // Spawn boss every 5 waves
+    if (this.wave % 5 === 0 && this.wave > 0) {
+      const bossX = this.player.x + 800;
+      const boss = new EnemyUnit(bossX, this.groundLevel - 70, 'boss');
+      boss.applyDifficulty(difficultyMultiplier);
+      this.enemies.push(boss);
+      this.collisionSystem.add(boss);
+      this.enemiesRemaining++;
     }
   }
 
@@ -154,8 +226,8 @@ class GameEngine {
     
     // Apply difficulty modifiers
     if (this.difficulty === 'easy') {
-      enemyCount = 6;
-      difficultyMultiplier = 0.7;
+      enemyCount = 4; // Reduced from 6 to 4
+      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
     } else if (this.difficulty === 'extreme') {
       enemyCount = 15;
       difficultyMultiplier = 1.5;
@@ -202,18 +274,80 @@ class GameEngine {
         this.menuState = 'main';
       }
     } else if (this.menuState === 'settings') {
-      if (this.inputManager.wasKeyPressed('1')) {
-        this.difficulty = 'easy';
-      } else if (this.inputManager.wasKeyPressed('2')) {
-        this.difficulty = 'medium';
-      } else if (this.inputManager.wasKeyPressed('3')) {
-        this.difficulty = 'extreme';
-      } else if (this.inputManager.wasKeyPressed('4')) {
-        this.audioEnabled = !this.audioEnabled;
-      } else if (this.inputManager.wasKeyPressed('Escape')) {
+      // Page navigation
+      if (this.inputManager.wasKeyPressed('ArrowLeft')) {
+        this.settingsPage = Math.max(0, this.settingsPage - 1);
+      } else if (this.inputManager.wasKeyPressed('ArrowRight')) {
+        this.settingsPage = Math.min(2, this.settingsPage + 1);
+      }
+      
+      // Page 0: Difficulty & Audio
+      if (this.settingsPage === 0) {
+        if (this.inputManager.wasKeyPressed('1')) {
+          this.difficulty = 'easy';
+        } else if (this.inputManager.wasKeyPressed('2')) {
+          this.difficulty = 'medium';
+        } else if (this.inputManager.wasKeyPressed('3')) {
+          this.difficulty = 'extreme';
+        } else if (this.inputManager.wasKeyPressed('4')) {
+          this.audioEnabled = !this.audioEnabled;
+        } else if (this.inputManager.wasKeyPressed('5')) {
+          this.masterVolume = Math.max(0, this.masterVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('6')) {
+          this.masterVolume = Math.min(1, this.masterVolume + 0.1);
+        } else if (this.inputManager.wasKeyPressed('7')) {
+          this.sfxVolume = Math.max(0, this.sfxVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('8')) {
+          this.sfxVolume = Math.min(1, this.sfxVolume + 0.1);
+        } else if (this.inputManager.wasKeyPressed('9')) {
+          this.musicVolume = Math.max(0, this.musicVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('0')) {
+          this.musicVolume = Math.min(1, this.musicVolume + 0.1);
+        }
+      }
+      // Page 1: Graphics & Display
+      else if (this.settingsPage === 1) {
+        if (this.inputManager.wasKeyPressed('1')) {
+          this.screenShake = !this.screenShake;
+        } else if (this.inputManager.wasKeyPressed('2')) {
+          const qualities = ['low', 'medium', 'high'];
+          const idx = qualities.indexOf(this.particleQuality);
+          this.particleQuality = qualities[(idx + 1) % qualities.length];
+        } else if (this.inputManager.wasKeyPressed('3')) {
+          this.showFPS = !this.showFPS;
+        } else if (this.inputManager.wasKeyPressed('4')) {
+          this.cameraSmoothness = Math.max(0.05, this.cameraSmoothness - 0.05);
+        } else if (this.inputManager.wasKeyPressed('5')) {
+          this.cameraSmoothness = Math.min(0.3, this.cameraSmoothness + 0.05);
+        } else if (this.inputManager.wasKeyPressed('6')) {
+          const styles = ['cross', 'dot', 'circle', 'none'];
+          const idx = styles.indexOf(this.crosshairStyle);
+          this.crosshairStyle = styles[(idx + 1) % styles.length];
+        } else if (this.inputManager.wasKeyPressed('7')) {
+          this.hudOpacity = Math.max(0.3, this.hudOpacity - 0.1);
+        } else if (this.inputManager.wasKeyPressed('8')) {
+          this.hudOpacity = Math.min(1, this.hudOpacity + 0.1);
+        }
+      }
+      // Page 2: Gameplay & Accessibility
+      else if (this.settingsPage === 2) {
+        if (this.inputManager.wasKeyPressed('1')) {
+          this.autoReload = !this.autoReload;
+        } else if (this.inputManager.wasKeyPressed('2')) {
+          const modes = ['none', 'protanopia', 'deuteranopia', 'tritanopia'];
+          const idx = modes.indexOf(this.colorBlindMode);
+          this.colorBlindMode = modes[(idx + 1) % modes.length];
+        }
+      }
+      
+      if (this.inputManager.wasKeyPressed('Escape')) {
         this.menuState = 'main';
       }
     } else if (this.menuState === 'controls') {
+      if (this.inputManager.wasKeyPressed('Escape')) {
+        this.menuState = 'main';
+      }
+    } else if (this.menuState === 'highscores') {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.menuState = 'main';
       }
@@ -228,6 +362,8 @@ class GameEngine {
         this.menuState = 'settings';
       } else if (this.inputManager.wasKeyPressed('4')) {
         this.menuState = 'controls';
+      } else if (this.inputManager.wasKeyPressed('5')) {
+        this.menuState = 'highscores';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -239,12 +375,18 @@ class GameEngine {
           const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime);
           
           if (result) {
+            // Play shoot sound
+            this.audioManager.playSound('shoot', 0.5);
+            
+            // Track shots fired
             if (Array.isArray(result)) {
+              this.shotsFired += result.length;
               result.forEach(p => {
                 this.projectiles.push(p);
                 this.collisionSystem.add(p);
               });
             } else {
+              this.shotsFired++;
               this.projectiles.push(result);
               this.collisionSystem.add(result);
             }
@@ -253,6 +395,12 @@ class GameEngine {
         
         // Reload
         if (this.inputManager.isKeyPressed('r') || this.inputManager.isKeyPressed('R')) {
+          this.player.reload(this.currentTime);
+        }
+        
+        // Auto-reload when out of ammo
+        if (this.autoReload && this.player.getCurrentWeapon().currentAmmo === 0 && 
+            !this.player.getCurrentWeapon().isReloading) {
           this.player.reload(this.currentTime);
         }
         
@@ -267,6 +415,19 @@ class GameEngine {
           this.player.roll(this.currentTime);
         }
         
+        // Special Ability (E key or Q key)
+        if (this.inputManager.wasKeyPressed('e') || this.inputManager.wasKeyPressed('E') ||
+            this.inputManager.wasKeyPressed('q') || this.inputManager.wasKeyPressed('Q')) {
+          const result = this.player.useSpecialAbility(this.currentTime, this);
+          if (result) {
+            // Visual/audio feedback for ability use
+            this.audioManager.playSound('ability', 0.8);
+            if (result === 'airstrike') {
+              this.camera.shake(10, 500);
+            }
+          }
+        }
+        
         // Weapon switching
         if (this.inputManager.isKeyPressed('1')) {
           this.player.switchWeapon(0);
@@ -277,6 +438,11 @@ class GameEngine {
         } else if (this.inputManager.isKeyPressed('4')) {
           this.player.switchWeapon(3);
         }
+      }
+      
+      // Toggle help overlay (H key)
+      if (this.inputManager.wasKeyPressed('h') || this.inputManager.wasKeyPressed('H')) {
+        this.showHelp = !this.showHelp;
       }
       
       // Pause
@@ -290,6 +456,8 @@ class GameEngine {
       } else if (this.inputManager.wasKeyPressed('m') || this.inputManager.wasKeyPressed('M')) {
         this.state = 'menu';
         this.menuState = 'main';
+      } else if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
+        this.startGame(this.mode, this.selectedCharacter);
       }
     } else if (this.state === 'gameover' || this.state === 'victory') {
       if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
@@ -308,7 +476,18 @@ class GameEngine {
     if (this.player && this.player.active) {
       this.player.update(deltaTime, this.inputManager, this.groundLevel, this.currentTime, this.worldWidth);
     } else if (this.player && !this.player.active) {
-      // Player died
+      // Player died - save high score
+      const accuracy = this.shotsFired > 0 ? 
+        ((this.shotsHit / this.shotsFired) * 100).toFixed(1) : 0;
+      
+      if (this.highScoreSystem.isHighScore(this.score)) {
+        this.highScoreSystem.addScore(this.score, this.selectedCharacter, this.difficulty, this.mode, {
+          kills: this.kills,
+          wave: this.wave,
+          accuracy: accuracy
+        });
+      }
+      
       this.state = 'gameover';
       this.menuState = 'gameover';
       this.ui.setLastScore(this.score);
@@ -343,6 +522,14 @@ class GameEngine {
     // Update particles
     this.particleSystem.update(deltaTime);
     
+    // Update combo timer
+    if (this.combo > 0 && this.currentTime - this.comboTimer > this.comboTimeout) {
+      this.combo = 0;
+    }
+    
+    // Check achievements
+    this.achievementSystem.update(this);
+    
     // Update camera
     this.camera.update();
     
@@ -359,6 +546,13 @@ class GameEngine {
     
     if (this.mode === 'survival') {
       if (this.enemiesRemaining === 0) {
+        // Wave clear bonus
+        const waveBonus = this.wave * 500;
+        this.score += waveBonus;
+        
+        // Reset wave damage tracking
+        this.damageTakenThisWave = 0;
+        
         this.wave++;
         this.spawnWave();
         this.spawnPickups();
@@ -376,6 +570,10 @@ class GameEngine {
     // Player vs Pickups
     this.pickups.forEach(pickup => {
       if (pickup.active && this.player.collidesWith(pickup)) {
+        // Track weapon pickups
+        if (pickup.pickupType && pickup.pickupType.startsWith('weapon_')) {
+          this.weaponsCollected++;
+        }
         pickup.apply(this.player);
         this.score += 50;
       }
@@ -392,22 +590,71 @@ class GameEngine {
             const killed = enemy.takeDamage(proj.damage);
             proj.destroy();
             
+            // Track hits and damage
+            this.shotsHit++;
+            this.totalDamageDealt += proj.damage;
+            
             if (killed) {
               this.kills++;
-              this.score += 100;
+              
+              // Play kill sound
+              this.audioManager.playSound('enemy_killed', 0.6);
+              
+              // Combo system
+              this.combo++;
+              if (this.combo > this.maxCombo) this.maxCombo = this.combo;
+              this.comboTimer = this.currentTime;
+              const comboBonus = Math.min(this.combo, 10) * 10; // Max 100 bonus points at 10x combo
+              const totalPoints = 100 + comboBonus;
+              this.score += totalPoints;
+              
+              // Track boss kills
+              if (enemy.enemyType === 'boss') {
+                this.bossesKilled++;
+              }
+              
               this.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2
               );
               
-              // Chance to spawn pickup
-              if (Math.random() < 0.3) {
-                const pickupTypes = ['health', 'ammo'];
-                const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
-                const pickup = new Pickup(enemy.x, enemy.y, type);
-                this.pickups.push(pickup);
-                this.collisionSystem.add(pickup);
+              // Screen shake on enemy kill
+              this.camera.shake(3, 150);
+              
+              // Show score popup
+              let popupText = `+${totalPoints}`;
+              let popupColor = '#ffff00';
+              if (this.combo > 1) {
+                popupText += ` (${this.combo}x)`;
+                popupColor = '#ff6600';
               }
+              this.particleSystem.createTextPopup(
+                enemy.x + enemy.width / 2,
+                enemy.y - 20,
+                popupText,
+                popupColor
+              );
+              
+              // Always spawn pickup when enemy is killed
+              // Common drops (70% chance)
+              let pickupTypes = ['health', 'ammo', 'healing', 'damage_boost'];
+              
+              // Rare weapon drops for elite enemies (20% chance)
+              if ((enemy.enemyType === 'heavy' || enemy.enemyType === 'sniper') && Math.random() < 0.2) {
+                const weaponDrops = ['weapon_rifle', 'weapon_shotgun', 'weapon_machinegun', 'weapon_sniper'];
+                pickupTypes = weaponDrops;
+              }
+              
+              // Epic weapon drops for bosses (guaranteed)
+              if (enemy.enemyType === 'boss') {
+                const epicWeapons = ['weapon_grenade', 'weapon_laser', 'weapon_machinegun'];
+                pickupTypes = epicWeapons;
+              }
+              
+              const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+              const pickup = new Pickup(enemy.x, enemy.y, type);
+              this.pickups.push(pickup);
+              this.collisionSystem.add(pickup);
             }
           }
         });
@@ -416,7 +663,11 @@ class GameEngine {
       // Enemy projectiles hitting player
       else {
         if (this.player.active && proj.collidesWith(this.player)) {
-          this.player.takeDamage(proj.damage);
+          const damaged = this.player.takeDamage(proj.damage);
+          if (damaged) {
+            this.totalDamageTaken += proj.damage;
+            this.damageTakenThisWave += proj.damage;
+          }
           proj.destroy();
           this.particleSystem.createExplosion(
             this.player.x + this.player.width / 2,
@@ -424,6 +675,8 @@ class GameEngine {
             10,
             '#ff0000'
           );
+          // Screen shake when player takes damage
+          this.camera.shake(5, 200);
         }
       }
     });
@@ -458,8 +711,12 @@ class GameEngine {
         kills: this.kills,
         wave: this.wave,
         enemiesRemaining: this.enemiesRemaining,
-        mode: this.mode
+        mode: this.mode,
+        combo: this.combo
       });
+      
+      // Draw achievement notifications (without camera transform)
+      this.achievementSystem.render(this.ctx, 10, 60);
     }
   }
 
@@ -536,6 +793,16 @@ class GameEngine {
       const deltaTime = timestamp - this.lastTime;
       this.lastTime = timestamp;
       this.currentTime = timestamp;
+      
+      // Calculate FPS
+      if (deltaTime > 0) {
+        this.fpsFrames.push(1000 / deltaTime);
+        if (this.fpsFrames.length > 60) this.fpsFrames.shift();
+        if (timestamp - this.fpsUpdateTime > 500) {
+          this.fps = Math.round(this.fpsFrames.reduce((a, b) => a + b, 0) / this.fpsFrames.length);
+          this.fpsUpdateTime = timestamp;
+        }
+      }
       
       // Handle input
       this.handleInput();

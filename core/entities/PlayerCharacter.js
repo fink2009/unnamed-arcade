@@ -35,6 +35,12 @@ class PlayerCharacter extends Entity {
     this.rollCooldown = 0;
     this.invulnerable = false;
     
+    // Special ability system
+    this.specialAbilityCooldown = 0;
+    this.specialAbilityDuration = 0;
+    this.specialAbilityActive = false;
+    this.lastSpecialUse = 0;
+    
     // Character-specific attributes
     this.applyCharacterTraits();
     
@@ -47,20 +53,28 @@ class PlayerCharacter extends Entity {
       case 'soldier':
         this.maxHealth = 100;
         this.baseSpeed = 4;
+        this.specialAbilityCooldown = 15000; // 15 seconds
+        this.specialAbilityName = 'Airstrike';
         break;
       case 'scout':
         this.maxHealth = 80;
         this.baseSpeed = 6;
         this.rollCooldown = -200; // Faster roll
+        this.specialAbilityCooldown = 10000; // 10 seconds
+        this.specialAbilityName = 'Sprint Boost';
         break;
       case 'heavy':
         this.maxHealth = 150;
         this.baseSpeed = 3;
+        this.specialAbilityCooldown = 20000; // 20 seconds
+        this.specialAbilityName = 'Shield';
         break;
       case 'medic':
         this.maxHealth = 90;
         this.baseSpeed = 4.5;
         this.healRate = 1; // Passive healing
+        this.specialAbilityCooldown = 12000; // 12 seconds
+        this.specialAbilityName = 'Med Pack';
         break;
     }
     this.health = this.maxHealth;
@@ -119,6 +133,66 @@ class PlayerCharacter extends Entity {
       this.invulnerable = true;
       this.dx = this.facing * 10;
     }
+  }
+  
+  useSpecialAbility(currentTime, gameEngine) {
+    if (currentTime - this.lastSpecialUse < this.specialAbilityCooldown) {
+      return null; // Still on cooldown
+    }
+    
+    this.lastSpecialUse = currentTime;
+    this.specialAbilityActive = true;
+    
+    switch (this.characterType) {
+      case 'soldier':
+        // Airstrike: Damage all enemies on screen
+        if (gameEngine) {
+          gameEngine.enemies.forEach(enemy => {
+            if (enemy.active) {
+              enemy.takeDamage(50);
+              gameEngine.particleSystem.createExplosion(
+                enemy.x + enemy.width / 2,
+                enemy.y + enemy.height / 2,
+                15,
+                '#ff8800'
+              );
+            }
+          });
+        }
+        setTimeout(() => { this.specialAbilityActive = false; }, 1000);
+        return 'airstrike';
+        
+      case 'scout':
+        // Sprint Boost: Double speed for 5 seconds
+        const originalSpeed = this.speed;
+        this.speed = originalSpeed * 2;
+        setTimeout(() => {
+          if (this.active) {
+            this.speed = originalSpeed;
+            this.specialAbilityActive = false;
+          }
+        }, 5000);
+        return 'sprint';
+        
+      case 'heavy':
+        // Shield: Invulnerability for 3 seconds
+        this.invulnerable = true;
+        setTimeout(() => {
+          if (this.active) {
+            this.invulnerable = false;
+            this.specialAbilityActive = false;
+          }
+        }, 3000);
+        return 'shield';
+        
+      case 'medic':
+        // Med Pack: Restore 50 HP
+        this.heal(50);
+        setTimeout(() => { this.specialAbilityActive = false; }, 500);
+        return 'medpack';
+    }
+    
+    return null;
   }
 
   takeDamage(amount) {
@@ -210,6 +284,14 @@ class PlayerCharacter extends Entity {
     // Draw shadow
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(this.x, this.y + this.height, this.width, 5);
+    
+    // Draw damage boost aura
+    if (this.hasDamageBoost) {
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(this.x - 3, this.y - 3, this.width + 6, this.height + 6);
+      ctx.globalAlpha = 1;
+    }
     
     // Draw player
     if (this.invulnerable) {

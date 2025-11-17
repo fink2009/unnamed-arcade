@@ -63,6 +63,8 @@ class EnemyUnit extends Entity {
         this.speed = 1.5;
         this.weapon = new MachineGun();
         this.color = '#cc0000';
+        this.width = 32;
+        this.height = 52;
         break;
       case 'sniper':
         this.maxHealth = 40;
@@ -76,6 +78,19 @@ class EnemyUnit extends Entity {
         this.speed = 3.5;
         this.weapon = new Pistol();
         this.color = '#ff6666';
+        this.width = 24;
+        this.height = 44;
+        break;
+      case 'boss':
+        this.maxHealth = 500;
+        this.speed = 1;
+        this.weapon = new MachineGun();
+        this.attackRange = 500;
+        this.color = '#990000';
+        this.width = 50;
+        this.height = 70;
+        this.aggroRange = 600;
+        this.shootCooldown = 500; // Faster shooting
         break;
     }
     this.health = this.maxHealth;

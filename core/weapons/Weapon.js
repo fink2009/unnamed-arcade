@@ -107,3 +107,62 @@ class SniperRifle extends Weapon {
     super('Sniper Rifle', 100, 1200, 5, 2500, 30);
   }
 }
+
+class GrenadeLauncher extends Weapon {
+  constructor() {
+    super('Grenade Launcher', 150, 2000, 6, 3000, 10);
+    this.explosionRadius = 80;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const vx = (dx / dist) * this.projectileSpeed;
+    const vy = (dy / dist) * this.projectileSpeed;
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.isExplosive = true;
+    projectile.explosionRadius = this.explosionRadius;
+    projectile.color = '#ffaa00';
+    projectile.width = 10;
+    projectile.height = 10;
+    return projectile;
+  }
+}
+
+class LaserGun extends Weapon {
+  constructor() {
+    super('Laser Gun', 30, 80, 999, 2000, 25);
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.currentAmmo--;
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const vx = (dx / dist) * this.projectileSpeed;
+    const vy = (dy / dist) * this.projectileSpeed;
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#00ffff';
+    projectile.width = 12;
+    projectile.height = 2;
+    return projectile;
+  }
+}
