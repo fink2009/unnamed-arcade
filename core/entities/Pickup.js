@@ -80,12 +80,14 @@ class Pickup extends Entity {
           w.damage = Math.floor(w.damage * this.damageMultiplier);
         });
         player.hasDamageBoost = true;
+        player.damageBoostEndTime = performance.now() + this.duration;
         setTimeout(() => {
           if (player.active) {
             player.weapons.forEach((w, i) => {
               w.damage = originalDamages[i];
             });
             player.hasDamageBoost = false;
+            player.damageBoostEndTime = null;
           }
         }, this.duration);
         break;
@@ -99,18 +101,24 @@ class Pickup extends Entity {
         break;
       case 'powerup_invincibility':
         player.invulnerable = true;
+        player.invulnerableEndTime = performance.now() + this.duration;
         setTimeout(() => {
           if (player.active) {
             player.invulnerable = false;
+            player.invulnerableEndTime = null;
           }
         }, this.duration);
         break;
       case 'powerup_speed':
         const oldSpeed = player.speed;
         player.speed *= 1.5;
+        player.speedBoostActive = true;
+        player.speedBoostEndTime = performance.now() + this.duration;
         setTimeout(() => {
           if (player.active) {
             player.speed = oldSpeed;
+            player.speedBoostActive = false;
+            player.speedBoostEndTime = null;
           }
         }, this.duration);
         break;

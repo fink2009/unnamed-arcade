@@ -127,12 +127,23 @@ class GameUI {
       ctx.fillText(`${gameState.combo}X COMBO!`, this.width / 2 - 60, 50);
     }
     
-    // Wave info (for survival mode)
+    // Wave/Level info
     if (gameState.mode === 'survival') {
       ctx.fillStyle = '#00ff00';
       ctx.fillText(`WAVE: ${gameState.wave}`, this.width / 2 - 50, 20);
       ctx.fillStyle = '#ffff00';
       ctx.fillText(`ENEMIES: ${gameState.enemiesRemaining}`, this.width / 2 - 50, 40);
+    } else if (gameState.mode === 'campaign' && window.game) {
+      ctx.fillStyle = '#00ff00';
+      ctx.fillText(`LEVEL: ${window.game.currentLevel}/${window.game.maxLevel}`, this.width / 2 - 50, 20);
+      if (window.game.currentLevelName) {
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '14px monospace';
+        ctx.fillText(window.game.currentLevelName, this.width / 2 - 50, 40);
+        ctx.font = '16px monospace';
+      }
+      ctx.fillStyle = '#ffff00';
+      ctx.fillText(`ENEMIES: ${gameState.enemiesRemaining}`, this.width / 2 - 50, 55);
     }
     
     // Difficulty indicator and help hint
@@ -143,18 +154,29 @@ class GameUI {
       ctx.fillText('Press H for Help', this.width / 2 + 40, this.height - 10);
     }
     
-    // Active power-ups indicator
+    // Active power-ups indicator with timers
     let powerupY = this.height - 35;
-    if (player.invulnerable) {
+    const currentTime = performance.now();
+    
+    if (player.invulnerable && player.invulnerableEndTime) {
+      const timeLeft = Math.ceil((player.invulnerableEndTime - currentTime) / 1000);
       ctx.fillStyle = '#ffffff';
       ctx.font = 'bold 14px monospace';
-      ctx.fillText('⚡ INVULNERABLE', this.width / 2 + 80, powerupY);
+      ctx.fillText(`⚡ INVULNERABLE (${timeLeft}s)`, this.width / 2 + 80, powerupY);
       powerupY -= 20;
     }
-    if (player.hasDamageBoost) {
+    if (player.hasDamageBoost && player.damageBoostEndTime) {
+      const timeLeft = Math.ceil((player.damageBoostEndTime - currentTime) / 1000);
       ctx.fillStyle = '#ff0000';
       ctx.font = 'bold 14px monospace';
-      ctx.fillText('💥 DAMAGE BOOST', this.width / 2 + 80, powerupY);
+      ctx.fillText(`💥 DAMAGE BOOST (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.speedBoostActive && player.speedBoostEndTime) {
+      const timeLeft = Math.ceil((player.speedBoostEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#00ffff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`⚡ SPEED BOOST (${timeLeft}s)`, this.width / 2 + 80, powerupY);
       powerupY -= 20;
     }
     
@@ -305,11 +327,13 @@ class GameUI {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
     ctx.fillRect(0, 0, this.width, this.height);
     
-    // Title
-    ctx.fillStyle = '#00ff00';
-    ctx.font = 'bold 48px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('WAR SHOOTER', this.width / 2, 100);
+    // Title - only show on main menu, character select, paused, gameover, and victory screens
+    if (['main', 'character', 'paused', 'gameover', 'victory'].includes(menuState)) {
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 48px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('WAR SHOOTER', this.width / 2, 100);
+    }
     
     ctx.font = '24px monospace';
     
@@ -406,9 +430,10 @@ class GameUI {
         ctx.fillText('DIFFICULTY:', this.width / 2, 190);
         
         const difficulties = [
-          { key: '1', name: 'EASY', value: 'easy' },
-          { key: '2', name: 'MEDIUM', value: 'medium' },
-          { key: '3', name: 'EXTREME', value: 'extreme' }
+          { key: '1', name: 'BABY', value: 'baby' },
+          { key: '2', name: 'EASY', value: 'easy' },
+          { key: '3', name: 'MEDIUM', value: 'medium' },
+          { key: '4', name: 'EXTREME', value: 'extreme' }
         ];
         
         difficulties.forEach((diff, i) => {
@@ -421,19 +446,19 @@ class GameUI {
         
         ctx.fillStyle = '#00ff00';
         ctx.font = '18px monospace';
-        ctx.fillText('AUDIO:', this.width / 2, 330);
+        ctx.fillText('AUDIO:', this.width / 2, 360);
         const audioStatus = window.game && window.game.audioEnabled ? 'ON' : 'OFF';
         ctx.font = '16px monospace';
-        ctx.fillText(`4 - Toggle Audio [${audioStatus}]`, this.width / 2, 360);
+        ctx.fillText(`5 - Toggle Audio [${audioStatus}]`, this.width / 2, 390);
         
         const masterVol = window.game ? Math.round(window.game.masterVolume * 100) : 100;
-        ctx.fillText(`5/6 - Master Volume: ${masterVol}%`, this.width / 2, 390);
+        ctx.fillText(`6/7 - Master Volume: ${masterVol}%`, this.width / 2, 420);
         
         const sfxVol = window.game ? Math.round(window.game.sfxVolume * 100) : 80;
-        ctx.fillText(`7/8 - SFX Volume: ${sfxVol}%`, this.width / 2, 420);
+        ctx.fillText(`8/9 - SFX Volume: ${sfxVol}%`, this.width / 2, 450);
         
         const musicVol = window.game ? Math.round(window.game.musicVolume * 100) : 70;
-        ctx.fillText(`9/0 - Music Volume: ${musicVol}%`, this.width / 2, 450);
+        ctx.fillText(`0/- - Music Volume: ${musicVol}%`, this.width / 2, 480);
       }
       else if (page === 1) {
         // Page 1: Graphics & Display
@@ -567,7 +592,10 @@ class GameUI {
       if (window.game) {
         ctx.fillStyle = '#00ff00';
         ctx.font = '16px monospace';
-        const playTime = ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
+        // Use finalPlayTime if available (captured at death), otherwise calculate live
+        const playTime = window.game.finalPlayTime !== undefined ? 
+          (window.game.finalPlayTime / 1000).toFixed(1) :
+          ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
         ctx.fillText(`Play Time: ${playTime}s`, this.width / 2, 210);
         ctx.fillText(`Kills: ${window.game.kills}`, this.width / 2, 235);
         ctx.fillText(`Max Combo: ${window.game.maxCombo}x`, this.width / 2, 260);
@@ -596,7 +624,10 @@ class GameUI {
       if (window.game) {
         ctx.fillStyle = '#00ff00';
         ctx.font = '16px monospace';
-        const playTime = ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
+        // Use finalPlayTime if available (captured at victory), otherwise calculate live
+        const playTime = window.game.finalPlayTime !== undefined ? 
+          (window.game.finalPlayTime / 1000).toFixed(1) :
+          ((window.game.currentTime - window.game.gameStartTime) / 1000).toFixed(1);
         ctx.fillText(`Play Time: ${playTime}s`, this.width / 2, 210);
         ctx.fillText(`Kills: ${window.game.kills}`, this.width / 2, 235);
         ctx.fillText(`Max Combo: ${window.game.maxCombo}x`, this.width / 2, 260);
@@ -611,6 +642,28 @@ class GameUI {
       ctx.font = '18px monospace';
       ctx.fillText('Press R to Restart', this.width / 2, 390);
       ctx.fillText('Press M for Main Menu', this.width / 2, 420);
+    } else if (menuState === 'levelcomplete') {
+      ctx.fillStyle = '#00ff00';
+      ctx.textAlign = 'center';
+      ctx.font = 'bold 36px monospace';
+      ctx.fillText('LEVEL COMPLETE!', this.width / 2, 150);
+      
+      if (window.game) {
+        ctx.fillStyle = '#ffff00';
+        ctx.font = '24px monospace';
+        ctx.fillText(`Level ${window.game.currentLevel} - ${window.game.currentLevelName || 'Complete'}`, this.width / 2, 200);
+        
+        const levelBonus = window.game.currentLevel * 1000;
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '20px monospace';
+        ctx.fillText(`Bonus: +${levelBonus}`, this.width / 2, 250);
+        ctx.fillText(`Total Score: ${window.game.score}`, this.width / 2, 280);
+        
+        ctx.fillStyle = '#888';
+        ctx.font = '18px monospace';
+        ctx.fillText('Preparing next level...', this.width / 2, 350);
+        ctx.fillText('Get ready!', this.width / 2, 380);
+      }
     }
     
     ctx.textAlign = 'left';

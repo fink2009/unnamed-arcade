@@ -145,11 +145,11 @@ class PlayerCharacter extends Entity {
     
     switch (this.characterType) {
       case 'soldier':
-        // Airstrike: Damage all enemies on screen
+        // Airstrike: Damage all enemies on screen (reduced damage for balance)
         if (gameEngine) {
           gameEngine.enemies.forEach(enemy => {
             if (enemy.active) {
-              enemy.takeDamage(50);
+              enemy.takeDamage(30); // Reduced from 50 to 30
               gameEngine.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2,
@@ -163,9 +163,9 @@ class PlayerCharacter extends Entity {
         return 'airstrike';
         
       case 'scout':
-        // Sprint Boost: Double speed for 5 seconds
+        // Sprint Boost: Increased speed for 5 seconds (balanced)
         const originalSpeed = this.speed;
-        this.speed = originalSpeed * 2;
+        this.speed = originalSpeed * 1.5; // Reduced from 2x to 1.5x
         setTimeout(() => {
           if (this.active) {
             this.speed = originalSpeed;
@@ -175,19 +175,19 @@ class PlayerCharacter extends Entity {
         return 'sprint';
         
       case 'heavy':
-        // Shield: Invulnerability for 3 seconds
+        // Shield: Invulnerability for 2.5 seconds (reduced from 3)
         this.invulnerable = true;
         setTimeout(() => {
           if (this.active) {
             this.invulnerable = false;
             this.specialAbilityActive = false;
           }
-        }, 3000);
+        }, 2500); // Reduced from 3000 to 2500
         return 'shield';
         
       case 'medic':
-        // Med Pack: Restore 50 HP
-        this.heal(50);
+        // Med Pack: Restore 40 HP (reduced from 50)
+        this.heal(40);
         setTimeout(() => { this.specialAbilityActive = false; }, 500);
         return 'medpack';
     }

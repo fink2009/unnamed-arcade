@@ -10,7 +10,7 @@ class GameEngine {
     this.menuState = 'main';
     
     // Settings
-    this.difficulty = 'medium'; // easy, medium, extreme
+    this.difficulty = 'medium'; // baby, easy, medium, extreme
     this.audioEnabled = true;
     this.musicVolume = 0.7;
     
@@ -41,6 +41,8 @@ class GameEngine {
     this.score = 0;
     this.kills = 0;
     this.wave = 1;
+    this.currentLevel = 1; // Campaign level
+    this.maxLevel = 7; // Total campaign levels including boss arenas
     this.enemiesRemaining = 0;
     this.waveTimer = 0;
     this.waveDuration = 30000; // 30 seconds per wave
@@ -118,6 +120,7 @@ class GameEngine {
     this.score = 0;
     this.kills = 0;
     this.wave = 1;
+    this.currentLevel = 1;
     this.waveTimer = 0;
     this.combo = 0;
     this.comboTimer = 0;
@@ -136,8 +139,11 @@ class GameEngine {
     this.player = new PlayerCharacter(100, this.groundLevel - 50, character);
     
     // Apply difficulty modifiers to player
-    if (this.difficulty === 'easy') {
-      this.player.maxHealth = Math.floor(this.player.maxHealth * 2.5); // Increased from 1.5x to 2.5x
+    if (this.difficulty === 'baby') {
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 5); // Very high health for baby mode
+      this.player.health = this.player.maxHealth;
+    } else if (this.difficulty === 'easy') {
+      this.player.maxHealth = Math.floor(this.player.maxHealth * 2.5);
       this.player.health = this.player.maxHealth;
     } else if (this.difficulty === 'extreme') {
       this.player.maxHealth = Math.floor(this.player.maxHealth * 0.7);
@@ -177,9 +183,12 @@ class GameEngine {
     let difficultyMultiplier = 1.0;
     
     // Apply difficulty modifiers
-    if (this.difficulty === 'easy') {
-      enemyCount = Math.floor(enemyCount * 0.4); // Reduced from 0.6 to 0.4
-      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
+    if (this.difficulty === 'baby') {
+      enemyCount = Math.max(1, Math.floor(enemyCount * 0.2)); // Very few enemies
+      difficultyMultiplier = 0.3; // Very weak enemies
+    } else if (this.difficulty === 'easy') {
+      enemyCount = Math.floor(enemyCount * 0.4);
+      difficultyMultiplier = 0.5;
     } else if (this.difficulty === 'extreme') {
       enemyCount = Math.floor(enemyCount * 1.5);
       difficultyMultiplier = 1.5;
@@ -221,30 +230,119 @@ class GameEngine {
   }
 
   spawnCampaignEnemies() {
-    let enemyCount = 10;
-    let difficultyMultiplier = 1.0;
+    // Define campaign levels with increasing difficulty and variety
+    const levels = [
+      // Level 1: Basic Training - Infantry only
+      {
+        name: 'Basic Training',
+        enemies: [
+          { type: 'infantry', count: 3, spacing: 300 },
+          { type: 'scout', count: 2, spacing: 400 }
+        ]
+      },
+      // Level 2: First Contact - Mixed units
+      {
+        name: 'First Contact',
+        enemies: [
+          { type: 'infantry', count: 4, spacing: 250 },
+          { type: 'heavy', count: 2, spacing: 500 },
+          { type: 'scout', count: 3, spacing: 350 }
+        ]
+      },
+      // Level 3: Boss Arena - First Boss
+      {
+        name: 'Boss Arena: Commander',
+        enemies: [
+          { type: 'infantry', count: 2, spacing: 400 },
+          { type: 'boss', count: 1, spacing: 0, position: 1500 }
+        ],
+        isBossLevel: true
+      },
+      // Level 4: Heavy Assault - Many heavy units
+      {
+        name: 'Heavy Assault',
+        enemies: [
+          { type: 'heavy', count: 3, spacing: 400 },
+          { type: 'infantry', count: 5, spacing: 250 },
+          { type: 'sniper', count: 2, spacing: 600 }
+        ]
+      },
+      // Level 5: Sniper Alley - Long range combat
+      {
+        name: 'Sniper Alley',
+        enemies: [
+          { type: 'sniper', count: 4, spacing: 500 },
+          { type: 'scout', count: 4, spacing: 300 },
+          { type: 'heavy', count: 2, spacing: 600 }
+        ]
+      },
+      // Level 6: Boss Arena - Elite Commander
+      {
+        name: 'Boss Arena: Elite Commander',
+        enemies: [
+          { type: 'heavy', count: 2, spacing: 500 },
+          { type: 'sniper', count: 2, spacing: 700 },
+          { type: 'boss', count: 1, spacing: 0, position: 1800 }
+        ],
+        isBossLevel: true
+      },
+      // Level 7: Final Stand - Maximum difficulty
+      {
+        name: 'Final Stand',
+        enemies: [
+          { type: 'infantry', count: 4, spacing: 250 },
+          { type: 'heavy', count: 3, spacing: 400 },
+          { type: 'sniper', count: 3, spacing: 500 },
+          { type: 'scout', count: 3, spacing: 350 },
+          { type: 'boss', count: 1, spacing: 0, position: 2000 }
+        ],
+        isBossLevel: true
+      }
+    ];
+    
+    // Get current level config (clamped to available levels)
+    const levelIndex = Math.min(this.currentLevel - 1, levels.length - 1);
+    const levelConfig = levels[levelIndex];
     
     // Apply difficulty modifiers
-    if (this.difficulty === 'easy') {
-      enemyCount = 4; // Reduced from 6 to 4
-      difficultyMultiplier = 0.5; // Reduced from 0.7 to 0.5
+    let difficultyMultiplier = 1.0;
+    let countMultiplier = 1.0;
+    
+    if (this.difficulty === 'baby') {
+      countMultiplier = 0.4; // 60% fewer enemies
+      difficultyMultiplier = 0.3;
+    } else if (this.difficulty === 'easy') {
+      countMultiplier = 0.6; // 40% fewer enemies
+      difficultyMultiplier = 0.5;
     } else if (this.difficulty === 'extreme') {
-      enemyCount = 15;
+      countMultiplier = 1.3; // 30% more enemies
       difficultyMultiplier = 1.5;
     }
     
-    // Spawn enemies across the level
-    for (let i = 0; i < enemyCount; i++) {
-      const x = 500 + i * 200 + Math.random() * 100;
-      const type = i % 3 === 0 ? 'heavy' : 'infantry';
+    // Spawn enemies based on level config
+    let xOffset = 500;
+    levelConfig.enemies.forEach(enemyGroup => {
+      const adjustedCount = Math.max(1, Math.floor(enemyGroup.count * countMultiplier));
       
-      const enemy = new EnemyUnit(x, this.groundLevel - 48, type);
-      enemy.applyDifficulty(difficultyMultiplier);
-      this.enemies.push(enemy);
-      this.collisionSystem.add(enemy);
-    }
+      for (let i = 0; i < adjustedCount; i++) {
+        const x = enemyGroup.position !== undefined ? 
+          enemyGroup.position : 
+          xOffset + i * enemyGroup.spacing + Math.random() * 100;
+        
+        const enemy = new EnemyUnit(x, this.groundLevel - (enemyGroup.type === 'boss' ? 70 : 48), enemyGroup.type);
+        enemy.applyDifficulty(difficultyMultiplier);
+        this.enemies.push(enemy);
+        this.collisionSystem.add(enemy);
+      }
+      
+      if (enemyGroup.position === undefined) {
+        xOffset += adjustedCount * enemyGroup.spacing + 200;
+      }
+    });
     
     this.enemiesRemaining = this.enemies.length;
+    this.currentLevelName = levelConfig.name;
+    this.isBossLevel = levelConfig.isBossLevel || false;
   }
 
   spawnPickups() {
@@ -284,24 +382,26 @@ class GameEngine {
       // Page 0: Difficulty & Audio
       if (this.settingsPage === 0) {
         if (this.inputManager.wasKeyPressed('1')) {
-          this.difficulty = 'easy';
+          this.difficulty = 'baby';
         } else if (this.inputManager.wasKeyPressed('2')) {
-          this.difficulty = 'medium';
+          this.difficulty = 'easy';
         } else if (this.inputManager.wasKeyPressed('3')) {
-          this.difficulty = 'extreme';
+          this.difficulty = 'medium';
         } else if (this.inputManager.wasKeyPressed('4')) {
-          this.audioEnabled = !this.audioEnabled;
+          this.difficulty = 'extreme';
         } else if (this.inputManager.wasKeyPressed('5')) {
-          this.masterVolume = Math.max(0, this.masterVolume - 0.1);
+          this.audioEnabled = !this.audioEnabled;
         } else if (this.inputManager.wasKeyPressed('6')) {
-          this.masterVolume = Math.min(1, this.masterVolume + 0.1);
+          this.masterVolume = Math.max(0, this.masterVolume - 0.1);
         } else if (this.inputManager.wasKeyPressed('7')) {
-          this.sfxVolume = Math.max(0, this.sfxVolume - 0.1);
+          this.masterVolume = Math.min(1, this.masterVolume + 0.1);
         } else if (this.inputManager.wasKeyPressed('8')) {
-          this.sfxVolume = Math.min(1, this.sfxVolume + 0.1);
+          this.sfxVolume = Math.max(0, this.sfxVolume - 0.1);
         } else if (this.inputManager.wasKeyPressed('9')) {
-          this.musicVolume = Math.max(0, this.musicVolume - 0.1);
+          this.sfxVolume = Math.min(1, this.sfxVolume + 0.1);
         } else if (this.inputManager.wasKeyPressed('0')) {
+          this.musicVolume = Math.max(0, this.musicVolume - 0.1);
+        } else if (this.inputManager.wasKeyPressed('-')) {
           this.musicVolume = Math.min(1, this.musicVolume + 0.1);
         }
       }
@@ -476,9 +576,12 @@ class GameEngine {
     if (this.player && this.player.active) {
       this.player.update(deltaTime, this.inputManager, this.groundLevel, this.currentTime, this.worldWidth);
     } else if (this.player && !this.player.active) {
-      // Player died - save high score
+      // Player died - save high score and capture final play time
       const accuracy = this.shotsFired > 0 ? 
         ((this.shotsHit / this.shotsFired) * 100).toFixed(1) : 0;
+      
+      // Capture final play time
+      this.finalPlayTime = this.currentTime - this.gameStartTime;
       
       if (this.highScoreSystem.isHighScore(this.score)) {
         this.highScoreSystem.addScore(this.score, this.selectedCharacter, this.difficulty, this.mode, {
@@ -559,9 +662,39 @@ class GameEngine {
       }
     } else if (this.mode === 'campaign') {
       if (this.enemiesRemaining === 0) {
-        this.state = 'victory';
-        this.menuState = 'victory';
-        this.ui.setLastScore(this.score);
+        // Level complete - check if more levels remain
+        if (this.currentLevel < this.maxLevel) {
+          // Award level completion bonus
+          const levelBonus = this.currentLevel * 1000;
+          this.score += levelBonus;
+          
+          // Show level complete message briefly
+          this.state = 'levelcomplete';
+          this.menuState = 'levelcomplete';
+          
+          // Advance to next level after delay
+          setTimeout(() => {
+            if (this.state === 'levelcomplete') {
+              this.currentLevel++;
+              this.enemies = [];
+              this.projectiles = [];
+              this.pickups = [];
+              this.spawnCampaignEnemies();
+              this.spawnPickups();
+              this.state = 'playing';
+              this.menuState = null;
+              
+              // Heal player between levels
+              this.player.heal(30);
+            }
+          }, 3000);
+        } else {
+          // All levels complete - Victory!
+          this.finalPlayTime = this.currentTime - this.gameStartTime;
+          this.state = 'victory';
+          this.menuState = 'victory';
+          this.ui.setLastScore(this.score);
+        }
       }
     }
   }
@@ -692,9 +825,9 @@ class GameEngine {
       return;
     }
     
-    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls') {
-      // Draw game in background if paused
-      if (this.state === 'paused') {
+    if (this.state === 'menu' || this.state === 'paused' || this.state === 'gameover' || this.state === 'victory' || this.state === 'levelcomplete' || this.menuState === 'character' || this.menuState === 'settings' || this.menuState === 'controls') {
+      // Draw game in background if paused or level complete
+      if (this.state === 'paused' || this.state === 'levelcomplete') {
         this.renderGame();
       }
       
