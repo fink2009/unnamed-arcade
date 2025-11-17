@@ -72,6 +72,7 @@ class GameEngine {
     this.screenShake = true;
     this.particleQuality = 'high'; // low, medium, high
     this.showFPS = false;
+    this.showHelp = false; // Toggle help overlay
     this.cameraSmoothness = 0.1; // 0.05 = smooth, 0.3 = snappy
     this.crosshairStyle = 'cross'; // cross, dot, circle, none
     this.hudOpacity = 0.9;
@@ -425,6 +426,11 @@ class GameEngine {
         } else if (this.inputManager.isKeyPressed('4')) {
           this.player.switchWeapon(3);
         }
+      }
+      
+      // Toggle help overlay (H key)
+      if (this.inputManager.wasKeyPressed('h') || this.inputManager.wasKeyPressed('H')) {
+        this.showHelp = !this.showHelp;
       }
       
       // Pause

@@ -128,11 +128,12 @@ class GameUI {
       ctx.fillText(`ENEMIES: ${gameState.enemiesRemaining}`, this.width / 2 - 50, 40);
     }
     
-    // Difficulty indicator
+    // Difficulty indicator and help hint
     if (window.game && window.game.difficulty) {
       ctx.fillStyle = '#888';
       ctx.font = '12px monospace';
       ctx.fillText(`[${window.game.difficulty.toUpperCase()}]`, this.width / 2 - 30, this.height - 10);
+      ctx.fillText('Press H for Help', this.width / 2 + 40, this.height - 10);
     }
     
     // Active power-ups indicator
@@ -236,6 +237,55 @@ class GameUI {
         ctx.arc(x, y, 8, 0, Math.PI * 2);
         ctx.stroke();
       }
+    }
+    
+    // Help overlay
+    if (window.game && window.game.showHelp) {
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+      ctx.fillRect(0, 0, this.width, this.height);
+      
+      ctx.fillStyle = '#00ff00';
+      ctx.font = 'bold 24px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('QUICK REFERENCE (Press H to toggle)', this.width / 2, 80);
+      
+      ctx.font = '16px monospace';
+      ctx.textAlign = 'left';
+      const startX = 150;
+      let y = 120;
+      
+      const tips = [
+        ['MOVEMENT', '#ffff00'],
+        ['WASD/Arrows - Move', '#00ff00'],
+        ['Space - Jump', '#00ff00'],
+        ['Shift - Dodge Roll', '#00ff00'],
+        ['', ''],
+        ['COMBAT', '#ffff00'],
+        ['Mouse - Aim & Shoot', '#00ff00'],
+        ['R - Reload', '#00ff00'],
+        ['E/Q - Special Ability', '#00ff00'],
+        ['1-4 - Switch Weapons', '#00ff00'],
+        ['', ''],
+        ['TIPS', '#ffff00'],
+        ['• Kill enemies to drop power-ups', '#888'],
+        ['• Chain kills for combo bonuses', '#888'],
+        ['• Bosses spawn every 5 waves', '#888'],
+        ['• Each character has unique abilities', '#888'],
+        ['• Check minimap for enemies & items', '#888'],
+      ];
+      
+      tips.forEach(([text, color]) => {
+        if (text) {
+          ctx.fillStyle = color;
+          ctx.fillText(text, startX, y);
+        }
+        y += text === '' ? 10 : 25;
+      });
+      
+      ctx.fillStyle = '#888';
+      ctx.font = '14px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('Press H to close', this.width / 2, this.height - 30);
     }
     
     ctx.restore();
