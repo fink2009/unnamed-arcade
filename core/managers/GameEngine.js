@@ -140,15 +140,7 @@ class GameEngine {
   }
 
   handleInput() {
-    if (this.state === 'menu') {
-      if (this.inputManager.wasKeyPressed('1')) {
-        this.menuState = 'character';
-        this.mode = 'campaign';
-      } else if (this.inputManager.wasKeyPressed('2')) {
-        this.menuState = 'character';
-        this.mode = 'survival';
-      }
-    } else if (this.state === 'character_select' || this.menuState === 'character') {
+    if (this.state === 'character_select' || this.menuState === 'character') {
       if (this.inputManager.wasKeyPressed('1')) {
         this.startGame(this.mode, 'soldier');
       } else if (this.inputManager.wasKeyPressed('2')) {
@@ -157,6 +149,14 @@ class GameEngine {
         this.startGame(this.mode, 'heavy');
       } else if (this.inputManager.wasKeyPressed('4')) {
         this.startGame(this.mode, 'medic');
+      }
+    } else if (this.state === 'menu') {
+      if (this.inputManager.wasKeyPressed('1')) {
+        this.menuState = 'character';
+        this.mode = 'campaign';
+      } else if (this.inputManager.wasKeyPressed('2')) {
+        this.menuState = 'character';
+        this.mode = 'survival';
       }
     } else if (this.state === 'playing') {
       // Player controls
