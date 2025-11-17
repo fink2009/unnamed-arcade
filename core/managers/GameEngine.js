@@ -48,15 +48,21 @@ class GameEngine {
   }
 
   async init() {
-    // Load assets (placeholder - would load actual sprites/sounds)
-    // await this.assetManager.loadImage('player', 'assets/sprites/player.png');
-    // await this.assetManager.loadSound('shoot', 'assets/sounds/shoot.wav');
-    
-    // Simulate loading
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    this.state = 'menu';
-    this.start();
+    try {
+      // Load assets (placeholder - would load actual sprites/sounds)
+      // await this.assetManager.loadImage('player', 'assets/sprites/player.png');
+      // await this.assetManager.loadSound('shoot', 'assets/sounds/shoot.wav');
+      
+      // Simulate loading
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      this.state = 'menu';
+      this.start();
+    } catch (error) {
+      console.error('Initialization error:', error);
+      // Show error message to user
+      this.state = 'error';
+    }
   }
 
   start() {
@@ -140,15 +146,7 @@ class GameEngine {
   }
 
   handleInput() {
-    if (this.state === 'menu') {
-      if (this.inputManager.wasKeyPressed('1')) {
-        this.menuState = 'character';
-        this.mode = 'campaign';
-      } else if (this.inputManager.wasKeyPressed('2')) {
-        this.menuState = 'character';
-        this.mode = 'survival';
-      }
-    } else if (this.state === 'character_select' || this.menuState === 'character') {
+    if (this.state === 'character_select' || this.menuState === 'character') {
       if (this.inputManager.wasKeyPressed('1')) {
         this.startGame(this.mode, 'soldier');
       } else if (this.inputManager.wasKeyPressed('2')) {
@@ -157,6 +155,14 @@ class GameEngine {
         this.startGame(this.mode, 'heavy');
       } else if (this.inputManager.wasKeyPressed('4')) {
         this.startGame(this.mode, 'medic');
+      }
+    } else if (this.state === 'menu') {
+      if (this.inputManager.wasKeyPressed('1')) {
+        this.menuState = 'character';
+        this.mode = 'campaign';
+      } else if (this.inputManager.wasKeyPressed('2')) {
+        this.menuState = 'character';
+        this.mode = 'survival';
       }
     } else if (this.state === 'playing') {
       // Player controls
@@ -235,7 +241,7 @@ class GameEngine {
     
     // Update player
     if (this.player && this.player.active) {
-      this.player.update(deltaTime, this.inputManager, this.groundLevel, this.currentTime);
+      this.player.update(deltaTime, this.inputManager, this.groundLevel, this.currentTime, this.worldWidth);
     } else if (this.player && !this.player.active) {
       // Player died
       this.state = 'gameover';
@@ -426,21 +432,26 @@ class GameEngine {
   }
 
   gameLoop(timestamp) {
-    const deltaTime = timestamp - this.lastTime;
-    this.lastTime = timestamp;
-    this.currentTime = timestamp;
-    
-    // Handle input
-    this.handleInput();
-    
-    // Update game
-    this.update(deltaTime);
-    
-    // Render game
-    this.render();
-    
-    // Clear pressed keys for next frame
-    this.inputManager.clearPressedKeys();
+    try {
+      const deltaTime = timestamp - this.lastTime;
+      this.lastTime = timestamp;
+      this.currentTime = timestamp;
+      
+      // Handle input
+      this.handleInput();
+      
+      // Update game
+      this.update(deltaTime);
+      
+      // Render game
+      this.render();
+      
+      // Clear pressed keys for next frame
+      this.inputManager.clearPressedKeys();
+    } catch (error) {
+      console.error('Game loop error:', error);
+      // Continue running even if there's an error
+    }
     
     // Continue loop
     requestAnimationFrame((time) => this.gameLoop(time));

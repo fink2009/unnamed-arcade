@@ -9,7 +9,8 @@ class PlayerCharacter extends Entity {
     // Stats
     this.maxHealth = 100;
     this.health = this.maxHealth;
-    this.speed = 4;
+    this.baseSpeed = 4;
+    this.speed = this.baseSpeed;
     this.jumpStrength = -12;
     
     // Physics
@@ -45,24 +46,25 @@ class PlayerCharacter extends Entity {
     switch (this.characterType) {
       case 'soldier':
         this.maxHealth = 100;
-        this.speed = 4;
+        this.baseSpeed = 4;
         break;
       case 'scout':
         this.maxHealth = 80;
-        this.speed = 6;
+        this.baseSpeed = 6;
         this.rollCooldown = -200; // Faster roll
         break;
       case 'heavy':
         this.maxHealth = 150;
-        this.speed = 3;
+        this.baseSpeed = 3;
         break;
       case 'medic':
         this.maxHealth = 90;
-        this.speed = 4.5;
+        this.baseSpeed = 4.5;
         this.healRate = 1; // Passive healing
         break;
     }
     this.health = this.maxHealth;
+    this.speed = this.baseSpeed;
   }
 
   getCurrentWeapon() {
@@ -106,7 +108,7 @@ class PlayerCharacter extends Entity {
     if (this.isCrouching) {
       this.isCrouching = false;
       this.height = 50;
-      this.speed = 4;
+      this.speed = this.baseSpeed;
     }
   }
 
@@ -135,7 +137,7 @@ class PlayerCharacter extends Entity {
     this.health = Math.min(this.maxHealth, this.health + amount);
   }
 
-  update(deltaTime, inputManager, groundLevel, currentTime) {
+  update(deltaTime, inputManager, groundLevel, currentTime, worldWidth) {
     const dt = deltaTime / 16;
     
     // Update weapon
@@ -176,6 +178,11 @@ class PlayerCharacter extends Entity {
     
     // Apply movement
     this.x += this.dx * dt;
+    
+    // Clamp to world bounds
+    if (worldWidth) {
+      this.x = Math.max(0, Math.min(worldWidth - this.width, this.x));
+    }
     
     // Apply gravity
     this.dy += this.gravity * dt;

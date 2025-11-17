@@ -63,12 +63,20 @@ class Pickup extends Entity {
         break;
       case 'powerup_invincibility':
         player.invulnerable = true;
-        setTimeout(() => player.invulnerable = false, this.duration);
+        setTimeout(() => {
+          if (player.active) {
+            player.invulnerable = false;
+          }
+        }, this.duration);
         break;
       case 'powerup_speed':
         const oldSpeed = player.speed;
         player.speed *= 1.5;
-        setTimeout(() => player.speed = oldSpeed, this.duration);
+        setTimeout(() => {
+          if (player.active) {
+            player.speed = oldSpeed;
+          }
+        }, this.duration);
         break;
     }
     this.destroy();
