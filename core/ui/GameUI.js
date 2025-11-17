@@ -323,15 +323,21 @@ class GameUI {
       ctx.fillText('SELECT CHARACTER', this.width / 2, 150);
       
       const characters = [
-        '1 - SOLDIER (Balanced)',
-        '2 - SCOUT (Fast, Low HP)',
-        '3 - HEAVY (Slow, High HP)',
-        '4 - MEDIC (Healing)'
+        {key: '1', name: 'SOLDIER', desc: 'Balanced stats, Airstrike ability'},
+        {key: '2', name: 'SCOUT', desc: 'Fast movement, Sprint Boost ability'},
+        {key: '3', name: 'HEAVY', desc: 'High HP, Shield ability'},
+        {key: '4', name: 'MEDIC', desc: 'Passive healing, Med Pack ability'}
       ];
       
       ctx.fillStyle = '#00ff00';
+      ctx.font = '18px monospace';
       characters.forEach((char, i) => {
-        ctx.fillText(char, this.width / 2, 220 + i * 40);
+        ctx.fillText(`${char.key} - ${char.name}`, this.width / 2, 220 + i * 60);
+        ctx.fillStyle = '#888';
+        ctx.font = '14px monospace';
+        ctx.fillText(char.desc, this.width / 2, 240 + i * 60);
+        ctx.fillStyle = '#00ff00';
+        ctx.font = '18px monospace';
       });
       
       ctx.fillStyle = '#888';

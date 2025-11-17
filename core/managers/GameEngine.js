@@ -20,6 +20,7 @@ class GameEngine {
     this.collisionSystem = new CollisionSystem();
     this.particleSystem = new ParticleSystem();
     this.achievementSystem = new AchievementSystem();
+    this.audioManager = new AudioManager();
     this.ui = new GameUI(canvas);
     
     // World settings
@@ -367,6 +368,9 @@ class GameEngine {
           const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime);
           
           if (result) {
+            // Play shoot sound
+            this.audioManager.playSound('shoot', 0.5);
+            
             // Track shots fired
             if (Array.isArray(result)) {
               this.shotsFired += result.length;
@@ -410,6 +414,7 @@ class GameEngine {
           const result = this.player.useSpecialAbility(this.currentTime, this);
           if (result) {
             // Visual/audio feedback for ability use
+            this.audioManager.playSound('ability', 0.8);
             if (result === 'airstrike') {
               this.camera.shake(10, 500);
             }
@@ -573,6 +578,9 @@ class GameEngine {
             
             if (killed) {
               this.kills++;
+              
+              // Play kill sound
+              this.audioManager.playSound('enemy_killed', 0.6);
               
               // Combo system
               this.combo++;
