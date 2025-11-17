@@ -3,11 +3,36 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>War Shooter MVP</title>
+  <title>War Shooter - Browser-Based Side-Scrolling Shooter</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <canvas id="gameCanvas"></canvas>
-  <script src="main.js" defer></script>
+  
+  <!-- Core Systems -->
+  <script src="core/entities/Entity.js"></script>
+  <script src="core/managers/InputManager.js"></script>
+  <script src="core/managers/AssetManager.js"></script>
+  <script src="core/systems/Camera.js"></script>
+  <script src="core/systems/CollisionSystem.js"></script>
+  <script src="core/systems/ParticleSystem.js"></script>
+  
+  <!-- Weapons -->
+  <script src="core/entities/Projectile.js"></script>
+  <script src="core/weapons/Weapon.js"></script>
+  
+  <!-- Entities -->
+  <script src="core/entities/PlayerCharacter.js"></script>
+  <script src="core/entities/EnemyUnit.js"></script>
+  <script src="core/entities/Pickup.js"></script>
+  
+  <!-- UI -->
+  <script src="core/ui/GameUI.js"></script>
+  
+  <!-- Game Manager -->
+  <script src="core/managers/GameEngine.js"></script>
+  
+  <!-- Main Entry Point -->
+  <script src="main.js"></script>
 </body>
 </html>
