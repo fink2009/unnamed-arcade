@@ -113,8 +113,10 @@ class GameEngine {
       
       this.state = 'menu';
       
-      // Play menu music
-      this.audioManager.playMusic('menu');
+      // Play menu music (will wait for user interaction to actually start)
+      setTimeout(() => {
+        this.audioManager.playMusic('menu');
+      }, 100);
       
       this.start();
     } catch (error) {

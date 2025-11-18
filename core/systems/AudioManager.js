@@ -43,9 +43,13 @@ class AudioManager {
     }
   }
   
-  resumeAudioContext() {
+  async resumeAudioContext() {
     if (this.audioContext && this.audioContext.state === 'suspended') {
-      this.audioContext.resume();
+      try {
+        await this.audioContext.resume();
+      } catch (e) {
+        console.warn('Could not resume audio context:', e);
+      }
     }
   }
   
@@ -719,8 +723,11 @@ class AudioManager {
   
   // === MUSIC SYSTEM ===
   
-  playMusic(musicName) {
+  async playMusic(musicName) {
     if (!this.enabled || !this.audioContext) return;
+    
+    // Resume audio context if needed
+    await this.resumeAudioContext();
     
     // Stop current music
     this.stopMusic();
@@ -728,25 +735,31 @@ class AudioManager {
     this.currentMusic = musicName;
     
     // Start new music based on name
-    switch (musicName) {
-      case 'menu':
-        this.playMenuMusic();
-        break;
-      case 'gameplay':
-        this.playGameplayMusic();
-        break;
-      case 'boss':
-        this.playBossMusic();
-        break;
-      case 'victory':
-        this.playVictoryMusic();
-        break;
-      case 'gameover':
-        this.playGameOverMusic();
-        break;
-      default:
-        // No music
-        break;
+    try {
+      switch (musicName) {
+        case 'menu':
+          this.playMenuMusic();
+          break;
+        case 'gameplay':
+          this.playGameplayMusic();
+          break;
+        case 'boss':
+          this.playBossMusic();
+          break;
+        case 'victory':
+          this.playVictoryMusic();
+          break;
+        case 'gameover':
+          this.playGameOverMusic();
+          break;
+        default:
+          // No music
+          break;
+      }
+    } catch (e) {
+      console.warn('Error playing music:', e);
+      // Disable music on error
+      this.currentMusic = null;
     }
   }
   
@@ -858,39 +871,44 @@ class AudioManager {
   }
   
   createMusicLoop(notes, loopDuration) {
-    if (!this.audioContext) return;
+    if (!this.audioContext || !this.musicGainNode) return;
     
     const ctx = this.audioContext;
     let startTime = ctx.currentTime;
     
     const playLoop = () => {
-      if (this.currentMusic === null) return;
+      if (this.currentMusic === null || !this.musicGainNode) return;
       
-      notes.forEach(note => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+      try {
+        notes.forEach(note => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          
+          osc.connect(gain);
+          gain.connect(this.musicGainNode);
+          
+          osc.type = 'square';
+          osc.frequency.value = note.freq;
+          
+          const time = startTime + note.time;
+          gain.gain.setValueAtTime(0.08, time);
+          gain.gain.setValueAtTime(0.08, time + note.duration - 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+          
+          osc.start(time);
+          osc.stop(time + note.duration);
+          
+          this.musicOscillators.push(osc);
+        });
         
-        osc.connect(gain);
-        gain.connect(this.musicGainNode);
+        startTime += loopDuration;
         
-        osc.type = 'square';
-        osc.frequency.value = note.freq;
-        
-        const time = startTime + note.time;
-        gain.gain.setValueAtTime(0.08, time);
-        gain.gain.setValueAtTime(0.08, time + note.duration - 0.05);
-        gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
-        
-        osc.start(time);
-        osc.stop(time + note.duration);
-        
-        this.musicOscillators.push(osc);
-      });
-      
-      startTime += loopDuration;
-      
-      // Schedule next loop
-      setTimeout(playLoop, loopDuration * 1000 - 100);
+        // Schedule next loop
+        setTimeout(playLoop, loopDuration * 1000 - 100);
+      } catch (e) {
+        console.warn('Error in music loop:', e);
+        this.currentMusic = null;
+      }
     };
     
     playLoop();
