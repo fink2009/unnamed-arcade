@@ -435,14 +435,130 @@ class GameEngine {
   }
 
   spawnCovers() {
-    // Spawn cover objects at regular intervals
-    for (let i = 0; i < this.worldWidth; i += 400) {
-      const x = i + 100;
-      const crateSize = 30;
-      const cover = new Cover(x, this.groundLevel - crateSize, crateSize, crateSize, 'crate');
+    // Spawn cover objects strategically based on current level
+    const coverConfigs = this.getLevelCoverConfig();
+    
+    coverConfigs.forEach(coverData => {
+      const cover = new Cover(
+        coverData.x, 
+        coverData.y !== undefined ? coverData.y : this.groundLevel - coverData.size,
+        coverData.size, 
+        coverData.size, 
+        coverData.type || 'crate'
+      );
       this.covers.push(cover);
       this.collisionSystem.add(cover);
-    }
+    });
+  }
+  
+  getLevelCoverConfig() {
+    // Strategic cover placement for each level
+    const coverConfigs = [
+      // Level 1: Basic Training - Simple cover for learning
+      [
+        { x: 350, size: 30 },
+        { x: 700, size: 30 },
+        { x: 1050, size: 30 },
+        { x: 1400, size: 30 },
+        { x: 1750, size: 30 },
+      ],
+      
+      // Level 2: First Contact - More scattered for tactical play
+      [
+        { x: 300, size: 30 },
+        { x: 550, size: 35 },
+        { x: 850, size: 30 },
+        { x: 1150, size: 35 },
+        { x: 1450, size: 30 },
+        { x: 1750, size: 30 },
+      ],
+      
+      // Level 3: Boss Arena - Strategic positions around arena
+      [
+        { x: 450, size: 40 },
+        { x: 700, size: 35 },
+        { x: 1000, size: 40 },
+        { x: 1300, size: 35 },
+        { x: 1550, size: 40 },
+      ],
+      
+      // Level 4: Heavy Assault - More cover for heavy combat
+      [
+        { x: 250, size: 35 },
+        { x: 500, size: 40 },
+        { x: 750, size: 35 },
+        { x: 1000, size: 40 },
+        { x: 1250, size: 35 },
+        { x: 1500, size: 40 },
+        { x: 1750, size: 35 },
+      ],
+      
+      // Level 5: Sniper Alley - Scattered cover, more focus on platforms
+      [
+        { x: 280, size: 30 },
+        { x: 550, size: 35 },
+        { x: 800, size: 30 },
+        { x: 1100, size: 35 },
+        { x: 1350, size: 30 },
+        { x: 1650, size: 30 },
+      ],
+      
+      // Level 6: Boss Arena - Heavy cover for intense boss fight
+      [
+        { x: 400, size: 45 },
+        { x: 650, size: 40 },
+        { x: 950, size: 45 },
+        { x: 1250, size: 40 },
+        { x: 1500, size: 45 },
+      ],
+      
+      // Level 7: Urban Warfare - Rubble and debris as cover
+      [
+        { x: 200, size: 40 },
+        { x: 450, size: 35 },
+        { x: 700, size: 45 },
+        { x: 950, size: 40 },
+        { x: 1200, size: 35 },
+        { x: 1450, size: 40 },
+        { x: 1700, size: 35 },
+      ],
+      
+      // Level 8: Industrial Complex - Machinery as cover
+      [
+        { x: 300, size: 40 },
+        { x: 580, size: 45 },
+        { x: 850, size: 40 },
+        { x: 1120, size: 45 },
+        { x: 1400, size: 40 },
+        { x: 1670, size: 40 },
+      ],
+      
+      // Level 9: Elite Commander Boss - Dense cover for survival
+      [
+        { x: 350, size: 45 },
+        { x: 600, size: 40 },
+        { x: 900, size: 50 },
+        { x: 1200, size: 40 },
+        { x: 1450, size: 45 },
+        { x: 1700, size: 40 },
+      ],
+      
+      // Level 10: Final Stand - Maximum cover for final battle
+      [
+        { x: 250, size: 40 },
+        { x: 450, size: 45 },
+        { x: 650, size: 40 },
+        { x: 850, size: 50 },
+        { x: 1050, size: 45 },
+        { x: 1250, size: 40 },
+        { x: 1450, size: 45 },
+        { x: 1650, size: 40 },
+        { x: 1850, size: 40 },
+      ],
+    ];
+    
+    const levelIndex = Math.min(this.currentLevel - 1, coverConfigs.length - 1);
+    return coverConfigs[levelIndex] || coverConfigs[0];
   }
   
   spawnLevelTerrain() {
@@ -472,147 +588,294 @@ class GameEngine {
   
   getLevelTerrainConfig() {
     // Define unique terrain for each level (Gunstar Heroes / Contra style)
+    // Improved for better flow, cohesion, and strategic gameplay
     const terrainConfigs = [
-      // Level 1: Basic Training - Simple ground with a few platforms
+      // Level 1: Basic Training - Gentle introduction with connected platforms
       {
         platforms: [
-          { x: 600, y: this.groundLevel - 120, width: 150, height: 20, type: 'passthrough' },
-          { x: 1200, y: this.groundLevel - 100, width: 180, height: 20, type: 'passthrough' },
-        ],
-        slopes: []
-      },
-      
-      // Level 2: First Contact - Multiple elevations and slopes
-      {
-        platforms: [
-          { x: 400, y: this.groundLevel - 140, width: 200, height: 20, type: 'passthrough' },
-          { x: 900, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
-          { x: 1400, y: this.groundLevel - 120, width: 200, height: 20, type: 'passthrough' },
+          // Starting area - low platform for easy access
+          { x: 450, y: this.groundLevel - 80, width: 200, height: 20, type: 'passthrough' },
+          // Mid-level platform with good spacing
+          { x: 800, y: this.groundLevel - 120, width: 220, height: 20, type: 'passthrough' },
+          // Higher platform for vertical gameplay introduction
+          { x: 1150, y: this.groundLevel - 100, width: 200, height: 20, type: 'passthrough' },
+          // End platform
+          { x: 1500, y: this.groundLevel - 90, width: 180, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 200, y: this.groundLevel - 80, width: 150, height: 80, direction: 'up' },
-          { x: 1600, y: this.groundLevel - 100, width: 180, height: 100, direction: 'down' },
+          // Gentle introductory slope at the start
+          { x: 200, y: this.groundLevel - 60, width: 200, height: 60, direction: 'up' },
         ]
       },
       
-      // Level 3: Boss Arena - Multi-floor arena with cover
+      // Level 2: First Contact - Flowing terrain with natural progression
       {
         platforms: [
-          { x: 300, y: this.groundLevel - 150, width: 250, height: 25, type: 'solid' },
-          { x: 800, y: this.groundLevel - 200, width: 300, height: 25, type: 'solid' },
-          { x: 1300, y: this.groundLevel - 150, width: 250, height: 25, type: 'solid' },
-          { x: 600, y: this.groundLevel - 250, width: 400, height: 25, type: 'passthrough' },
-        ],
-        slopes: []
-      },
-      
-      // Level 4: Heavy Assault - Complex multi-level with slopes
-      {
-        platforms: [
-          { x: 300, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
-          { x: 700, y: this.groundLevel - 200, width: 250, height: 20, type: 'passthrough' },
-          { x: 1100, y: this.groundLevel - 160, width: 220, height: 20, type: 'passthrough' },
-          { x: 1500, y: this.groundLevel - 220, width: 280, height: 20, type: 'passthrough' },
+          // Lower tier - connected series
+          { x: 350, y: this.groundLevel - 100, width: 220, height: 20, type: 'passthrough' },
+          { x: 700, y: this.groundLevel - 140, width: 200, height: 20, type: 'passthrough' },
+          // Upper tier - accessible from lower tier
+          { x: 1000, y: this.groundLevel - 180, width: 240, height: 20, type: 'passthrough' },
+          { x: 1350, y: this.groundLevel - 160, width: 220, height: 20, type: 'passthrough' },
+          // High platform for sniping position
+          { x: 1700, y: this.groundLevel - 200, width: 200, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 520, y: this.groundLevel - 130, width: 180, height: 70, direction: 'up' },
-          { x: 950, y: this.groundLevel - 200, width: 150, height: 40, direction: 'down' },
-          { x: 1320, y: this.groundLevel - 160, width: 180, height: 60, direction: 'up' },
+          // Entry slope
+          { x: 150, y: this.groundLevel - 70, width: 180, height: 70, direction: 'up' },
+          // Connecting slopes between platform tiers
+          { x: 570, y: this.groundLevel - 100, width: 130, height: 40, direction: 'up' },
+          { x: 900, y: this.groundLevel - 140, width: 100, height: 40, direction: 'up' },
+          // Exit slope
+          { x: 1900, y: this.groundLevel - 120, width: 150, height: 120, direction: 'down' },
         ]
       },
       
-      // Level 5: Sniper Alley - Vertical emphasis with high platforms
+      // Level 3: Boss Arena - Symmetrical multi-tier arena with strategic positions
       {
         platforms: [
-          { x: 350, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
-          { x: 700, y: this.groundLevel - 260, width: 200, height: 20, type: 'passthrough' },
-          { x: 1050, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
-          { x: 1400, y: this.groundLevel - 280, width: 220, height: 20, type: 'passthrough' },
-          { x: 500, y: this.groundLevel - 340, width: 250, height: 20, type: 'passthrough' },
+          // Ground level side platforms (solid for cover)
+          { x: 250, y: this.groundLevel - 120, width: 280, height: 30, type: 'solid' },
+          { x: 1470, y: this.groundLevel - 120, width: 280, height: 30, type: 'solid' },
+          // Mid-level platforms (solid, creates layered arena feel)
+          { x: 400, y: this.groundLevel - 200, width: 260, height: 30, type: 'solid' },
+          { x: 1340, y: this.groundLevel - 200, width: 260, height: 30, type: 'solid' },
+          // Center high ground (passthrough, allows tactical positioning)
+          { x: 750, y: this.groundLevel - 260, width: 500, height: 25, type: 'passthrough' },
+          // Small side perches for dodge opportunities
+          { x: 150, y: this.groundLevel - 180, width: 100, height: 20, type: 'passthrough' },
+          { x: 1750, y: this.groundLevel - 180, width: 100, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 200, y: this.groundLevel - 120, width: 150, height: 120, direction: 'up' },
+          // Slopes to access side platforms
+          { x: 100, y: this.groundLevel - 120, width: 150, height: 120, direction: 'up' },
+          { x: 1750, y: this.groundLevel - 120, width: 150, height: 120, direction: 'down' },
         ]
       },
       
-      // Level 6: Boss Arena - Large multi-tiered combat zone
+      // Level 4: Heavy Assault - Industrial zone with conveyor-like platforms
       {
         platforms: [
-          { x: 250, y: this.groundLevel - 140, width: 280, height: 30, type: 'solid' },
-          { x: 750, y: this.groundLevel - 220, width: 350, height: 30, type: 'solid' },
-          { x: 1300, y: this.groundLevel - 140, width: 280, height: 30, type: 'solid' },
-          { x: 500, y: this.groundLevel - 300, width: 500, height: 25, type: 'passthrough' },
+          // Lower industrial walkways
+          { x: 280, y: this.groundLevel - 110, width: 240, height: 20, type: 'passthrough' },
+          { x: 650, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
+          { x: 970, y: this.groundLevel - 110, width: 240, height: 20, type: 'passthrough' },
+          { x: 1340, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
+          // Upper industrial level
+          { x: 400, y: this.groundLevel - 200, width: 280, height: 20, type: 'passthrough' },
+          { x: 800, y: this.groundLevel - 240, width: 300, height: 20, type: 'passthrough' },
+          { x: 1220, y: this.groundLevel - 200, width: 280, height: 20, type: 'passthrough' },
+          // High observation deck
+          { x: 850, y: this.groundLevel - 320, width: 300, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 100, y: this.groundLevel - 140, width: 150, height: 140, direction: 'up' },
-          { x: 1580, y: this.groundLevel - 140, width: 150, height: 140, direction: 'down' },
+          // Entry ramps
+          { x: 150, y: this.groundLevel - 80, width: 130, height: 80, direction: 'up' },
+          // Connecting slopes between levels
+          { x: 520, y: this.groundLevel - 110, width: 130, height: 90, direction: 'up' },
+          { x: 850, y: this.groundLevel - 130, width: 120, height: 110, direction: 'up' },
+          { x: 1210, y: this.groundLevel - 110, width: 130, height: 90, direction: 'up' },
+          { x: 680, y: this.groundLevel - 200, width: 120, height: 40, direction: 'up' },
+          { x: 1100, y: this.groundLevel - 240, width: 120, height: 40, direction: 'down' },
         ]
       },
       
-      // Level 7: Urban Warfare - City ruins feel with scattered platforms
+      // Level 5: Sniper Alley - Verticality with sniper positions and cover
       {
         platforms: [
-          { x: 280, y: this.groundLevel - 130, width: 160, height: 20, type: 'passthrough' },
-          { x: 600, y: this.groundLevel - 200, width: 200, height: 25, type: 'solid' },
-          { x: 950, y: this.groundLevel - 150, width: 180, height: 20, type: 'passthrough' },
-          { x: 1280, y: this.groundLevel - 220, width: 240, height: 25, type: 'solid' },
-          { x: 450, y: this.groundLevel - 290, width: 280, height: 20, type: 'passthrough' },
+          // Ground level cover platforms (staggered)
+          { x: 300, y: this.groundLevel - 100, width: 160, height: 20, type: 'passthrough' },
+          { x: 600, y: this.groundLevel - 100, width: 160, height: 20, type: 'passthrough' },
+          { x: 900, y: this.groundLevel - 100, width: 160, height: 20, type: 'passthrough' },
+          { x: 1200, y: this.groundLevel - 100, width: 160, height: 20, type: 'passthrough' },
+          // Mid-level sniper positions
+          { x: 400, y: this.groundLevel - 180, width: 200, height: 20, type: 'passthrough' },
+          { x: 800, y: this.groundLevel - 210, width: 220, height: 20, type: 'passthrough' },
+          { x: 1200, y: this.groundLevel - 180, width: 200, height: 20, type: 'passthrough' },
+          // High ground sniper nests
+          { x: 250, y: this.groundLevel - 280, width: 240, height: 20, type: 'passthrough' },
+          { x: 650, y: this.groundLevel - 320, width: 300, height: 20, type: 'passthrough' },
+          { x: 1110, y: this.groundLevel - 280, width: 240, height: 20, type: 'passthrough' },
+          // Ultra-high vantage point
+          { x: 700, y: this.groundLevel - 400, width: 300, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 180, y: this.groundLevel - 90, width: 100, height: 90, direction: 'up' },
-          { x: 800, y: this.groundLevel - 200, width: 150, height: 50, direction: 'down' },
-          { x: 1520, y: this.groundLevel - 180, width: 140, height: 90, direction: 'down' },
+          // Access slopes to different tiers
+          { x: 150, y: this.groundLevel - 140, width: 150, height: 140, direction: 'up' },
+          { x: 460, y: this.groundLevel - 100, width: 140, height: 80, direction: 'up' },
+          { x: 600, y: this.groundLevel - 180, width: 150, height: 100, direction: 'up' },
+          { x: 1020, y: this.groundLevel - 210, width: 180, height: 70, direction: 'down' },
+          { x: 1400, y: this.groundLevel - 180, width: 160, height: 100, direction: 'down' },
         ]
       },
       
-      // Level 8: Industrial Complex - Dense platforms simulating factory floors
+      // Level 6: Boss Arena - Epic large-scale arena with multiple tiers
       {
         platforms: [
-          { x: 200, y: this.groundLevel - 140, width: 220, height: 25, type: 'solid' },
-          { x: 500, y: this.groundLevel - 210, width: 260, height: 25, type: 'solid' },
-          { x: 850, y: this.groundLevel - 150, width: 200, height: 25, type: 'solid' },
-          { x: 1150, y: this.groundLevel - 240, width: 300, height: 25, type: 'solid' },
-          { x: 350, y: this.groundLevel - 310, width: 320, height: 20, type: 'passthrough' },
-          { x: 900, y: this.groundLevel - 330, width: 350, height: 20, type: 'passthrough' },
+          // Ground tier (solid platforms for cover and movement)
+          { x: 200, y: this.groundLevel - 130, width: 300, height: 30, type: 'solid' },
+          { x: 1500, y: this.groundLevel - 130, width: 300, height: 30, type: 'solid' },
+          // Mid-level strategic positions (solid)
+          { x: 350, y: this.groundLevel - 210, width: 280, height: 30, type: 'solid' },
+          { x: 800, y: this.groundLevel - 250, width: 400, height: 30, type: 'solid' },
+          { x: 1370, y: this.groundLevel - 210, width: 280, height: 30, type: 'solid' },
+          // Upper tactical platforms (passthrough for flexibility)
+          { x: 500, y: this.groundLevel - 320, width: 280, height: 25, type: 'passthrough' },
+          { x: 1220, y: this.groundLevel - 320, width: 280, height: 25, type: 'passthrough' },
+          // Central high ground (for dramatic boss battles)
+          { x: 780, y: this.groundLevel - 380, width: 440, height: 25, type: 'passthrough' },
+          // Side observation points
+          { x: 100, y: this.groundLevel - 180, width: 120, height: 20, type: 'passthrough' },
+          { x: 1780, y: this.groundLevel - 180, width: 120, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 420, y: this.groundLevel - 140, width: 80, height: 70, direction: 'up' },
-          { x: 760, y: this.groundLevel - 210, width: 90, height: 60, direction: 'down' },
-          { x: 1050, y: this.groundLevel - 150, width: 100, height: 90, direction: 'up' },
+          // Entry slopes to ground platforms
+          { x: 80, y: this.groundLevel - 130, width: 120, height: 130, direction: 'up' },
+          { x: 1800, y: this.groundLevel - 130, width: 120, height: 130, direction: 'down' },
+          // Connecting slopes between tiers
+          { x: 500, y: this.groundLevel - 130, width: 150, height: 80, direction: 'up' },
+          { x: 1350, y: this.groundLevel - 130, width: 150, height: 80, direction: 'up' },
+          { x: 630, y: this.groundLevel - 210, width: 170, height: 110, direction: 'up' },
         ]
       },
       
-      // Level 9: Elite Commander Boss - Large arena with strategic positions
+      // Level 7: Urban Warfare - Ruined city with integrated debris and buildings
       {
         platforms: [
-          { x: 280, y: this.groundLevel - 160, width: 300, height: 30, type: 'solid' },
-          { x: 800, y: this.groundLevel - 240, width: 380, height: 30, type: 'solid' },
-          { x: 1350, y: this.groundLevel - 160, width: 300, height: 30, type: 'solid' },
-          { x: 550, y: this.groundLevel - 320, width: 600, height: 25, type: 'passthrough' },
+          // Destroyed building floors (staggered for ruins feel)
+          { x: 250, y: this.groundLevel - 120, width: 180, height: 20, type: 'passthrough' },
+          { x: 520, y: this.groundLevel - 160, width: 200, height: 25, type: 'solid' },
+          { x: 820, y: this.groundLevel - 140, width: 180, height: 20, type: 'passthrough' },
+          { x: 1080, y: this.groundLevel - 180, width: 220, height: 25, type: 'solid' },
+          { x: 1400, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
+          // Upper floors of damaged buildings
+          { x: 300, y: this.groundLevel - 220, width: 240, height: 20, type: 'passthrough' },
+          { x: 650, y: this.groundLevel - 260, width: 260, height: 20, type: 'passthrough' },
+          { x: 1000, y: this.groundLevel - 280, width: 280, height: 20, type: 'passthrough' },
+          { x: 1390, y: this.groundLevel - 240, width: 240, height: 20, type: 'passthrough' },
+          // Rooftop access
+          { x: 700, y: this.groundLevel - 360, width: 320, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 120, y: this.groundLevel - 160, width: 160, height: 160, direction: 'up' },
-          { x: 1650, y: this.groundLevel - 160, width: 160, height: 160, direction: 'down' },
+          // Rubble slopes (natural debris feel)
+          { x: 150, y: this.groundLevel - 80, width: 100, height: 80, direction: 'up' },
+          { x: 430, y: this.groundLevel - 120, width: 90, height: 40, direction: 'up' },
+          { x: 720, y: this.groundLevel - 160, width: 100, height: 20, direction: 'down' },
+          { x: 1000, y: this.groundLevel - 140, width: 80, height: 40, direction: 'up' },
+          { x: 1300, y: this.groundLevel - 180, width: 100, height: 50, direction: 'down' },
+          { x: 540, y: this.groundLevel - 220, width: 110, height: 60, direction: 'up' },
+          { x: 910, y: this.groundLevel - 260, width: 90, height: 40, direction: 'up' },
         ]
       },
       
-      // Level 10: Final Stand - Most complex and challenging terrain
+      // Level 8: Industrial Complex - Layered factory with machinery feel
       {
         platforms: [
-          { x: 230, y: this.groundLevel - 140, width: 190, height: 20, type: 'passthrough' },
-          { x: 550, y: this.groundLevel - 210, width: 240, height: 25, type: 'solid' },
-          { x: 920, y: this.groundLevel - 170, width: 200, height: 20, type: 'passthrough' },
-          { x: 1250, y: this.groundLevel - 250, width: 270, height: 25, type: 'solid' },
-          { x: 400, y: this.groundLevel - 310, width: 290, height: 20, type: 'passthrough' },
-          { x: 1000, y: this.groundLevel - 340, width: 340, height: 20, type: 'passthrough' },
-          { x: 600, y: this.groundLevel - 400, width: 500, height: 20, type: 'passthrough' },
+          // Ground level machinery platforms (solid, like machines)
+          { x: 200, y: this.groundLevel - 130, width: 240, height: 25, type: 'solid' },
+          { x: 550, y: this.groundLevel - 140, width: 220, height: 25, type: 'solid' },
+          { x: 880, y: this.groundLevel - 130, width: 240, height: 25, type: 'solid' },
+          { x: 1230, y: this.groundLevel - 140, width: 220, height: 25, type: 'solid' },
+          { x: 1560, y: this.groundLevel - 130, width: 240, height: 25, type: 'solid' },
+          // Mid-level catwalks
+          { x: 280, y: this.groundLevel - 220, width: 280, height: 20, type: 'passthrough' },
+          { x: 650, y: this.groundLevel - 250, width: 260, height: 20, type: 'passthrough' },
+          { x: 1000, y: this.groundLevel - 240, width: 280, height: 20, type: 'passthrough' },
+          { x: 1370, y: this.groundLevel - 220, width: 280, height: 20, type: 'passthrough' },
+          // Upper maintenance walkways
+          { x: 350, y: this.groundLevel - 330, width: 320, height: 20, type: 'passthrough' },
+          { x: 800, y: this.groundLevel - 360, width: 380, height: 20, type: 'passthrough' },
+          { x: 1280, y: this.groundLevel - 330, width: 320, height: 20, type: 'passthrough' },
+          // Control room level (highest)
+          { x: 750, y: this.groundLevel - 440, width: 500, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 140, y: this.groundLevel - 95, width: 90, height: 95, direction: 'up' },
-          { x: 420, y: this.groundLevel - 140, width: 130, height: 70, direction: 'up' },
-          { x: 790, y: this.groundLevel - 210, width: 130, height: 40, direction: 'down' },
-          { x: 1120, y: this.groundLevel - 170, width: 130, height: 80, direction: 'up' },
-          { x: 1520, y: this.groundLevel - 250, width: 150, height: 110, direction: 'down' },
+          // Conveyor belt style slopes
+          { x: 140, y: this.groundLevel - 90, width: 60, height: 90, direction: 'up' },
+          { x: 440, y: this.groundLevel - 130, width: 110, height: 90, direction: 'up' },
+          { x: 770, y: this.groundLevel - 140, width: 110, height: 80, direction: 'down' },
+          { x: 1120, y: this.groundLevel - 130, width: 110, height: 110, direction: 'up' },
+          { x: 1450, y: this.groundLevel - 140, width: 110, height: 80, direction: 'down' },
+          // Access to catwalks
+          { x: 560, y: this.groundLevel - 220, width: 90, height: 110, direction: 'up' },
+          { x: 910, y: this.groundLevel - 250, width: 90, height: 110, direction: 'down' },
+          { x: 1280, y: this.groundLevel - 240, width: 90, height: 90, direction: 'down' },
+        ]
+      },
+      
+      // Level 9: Elite Commander Boss - Intimidating arena with tactical depth
+      {
+        platforms: [
+          // Ground tier - wide platforms for mobility
+          { x: 230, y: this.groundLevel - 150, width: 320, height: 30, type: 'solid' },
+          { x: 1450, y: this.groundLevel - 150, width: 320, height: 30, type: 'solid' },
+          // Mid-tier defensive positions
+          { x: 400, y: this.groundLevel - 230, width: 300, height: 30, type: 'solid' },
+          { x: 850, y: this.groundLevel - 270, width: 400, height: 30, type: 'solid' },
+          { x: 1300, y: this.groundLevel - 230, width: 300, height: 30, type: 'solid' },
+          // Upper tactical advantages
+          { x: 520, y: this.groundLevel - 340, width: 300, height: 25, type: 'passthrough' },
+          { x: 1180, y: this.groundLevel - 340, width: 300, height: 25, type: 'passthrough' },
+          // Central commanding position
+          { x: 820, y: this.groundLevel - 420, width: 460, height: 25, type: 'passthrough' },
+          // Side flanking positions
+          { x: 120, y: this.groundLevel - 200, width: 130, height: 20, type: 'passthrough' },
+          { x: 1750, y: this.groundLevel - 200, width: 130, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          // Major access slopes
+          { x: 80, y: this.groundLevel - 150, width: 150, height: 150, direction: 'up' },
+          { x: 1770, y: this.groundLevel - 150, width: 150, height: 150, direction: 'down' },
+          // Mid-tier connections
+          { x: 550, y: this.groundLevel - 150, width: 150, height: 80, direction: 'up' },
+          { x: 1300, y: this.groundLevel - 150, width: 150, height: 80, direction: 'up' },
+          { x: 700, y: this.groundLevel - 230, width: 150, height: 110, direction: 'up' },
+          { x: 1150, y: this.groundLevel - 270, width: 150, height: 70, direction: 'down' },
+        ]
+      },
+      
+      // Level 10: Final Stand - Epic finale with maximum terrain complexity
+      {
+        platforms: [
+          // Ground level - multiple short platforms (chaotic battlefield feel)
+          { x: 200, y: this.groundLevel - 120, width: 200, height: 20, type: 'passthrough' },
+          { x: 480, y: this.groundLevel - 140, width: 180, height: 20, type: 'passthrough' },
+          { x: 740, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
+          { x: 1020, y: this.groundLevel - 150, width: 180, height: 20, type: 'passthrough' },
+          { x: 1280, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
+          { x: 1560, y: this.groundLevel - 140, width: 180, height: 20, type: 'passthrough' },
+          // Mid-level fortifications (solid for defensive play)
+          { x: 320, y: this.groundLevel - 220, width: 260, height: 25, type: 'solid' },
+          { x: 700, y: this.groundLevel - 260, width: 300, height: 25, type: 'solid' },
+          { x: 1120, y: this.groundLevel - 240, width: 280, height: 25, type: 'solid' },
+          { x: 1520, y: this.groundLevel - 220, width: 260, height: 25, type: 'solid' },
+          // Upper battlefield layer
+          { x: 400, y: this.groundLevel - 330, width: 300, height: 20, type: 'passthrough' },
+          { x: 820, y: this.groundLevel - 360, width: 360, height: 20, type: 'passthrough' },
+          { x: 1300, y: this.groundLevel - 330, width: 300, height: 20, type: 'passthrough' },
+          // Elite vantage points (highest tier)
+          { x: 500, y: this.groundLevel - 440, width: 280, height: 20, type: 'passthrough' },
+          { x: 1220, y: this.groundLevel - 440, width: 280, height: 20, type: 'passthrough' },
+          // Ultimate high ground (final stand position)
+          { x: 780, y: this.groundLevel - 520, width: 440, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          // Entry slopes (both sides)
+          { x: 100, y: this.groundLevel - 90, width: 100, height: 90, direction: 'up' },
+          { x: 1800, y: this.groundLevel - 90, width: 100, height: 90, direction: 'down' },
+          // Connecting slopes to mid-level
+          { x: 400, y: this.groundLevel - 140, width: 80, height: 80, direction: 'up' },
+          { x: 660, y: this.groundLevel - 150, width: 80, height: 110, direction: 'up' },
+          { x: 940, y: this.groundLevel - 130, width: 80, height: 130, direction: 'up' },
+          { x: 1200, y: this.groundLevel - 150, width: 80, height: 90, direction: 'up' },
+          { x: 1480, y: this.groundLevel - 140, width: 80, height: 80, direction: 'up' },
+          // Upper tier access slopes
+          { x: 580, y: this.groundLevel - 220, width: 120, height: 110, direction: 'up' },
+          { x: 1000, y: this.groundLevel - 260, width: 120, height: 100, direction: 'down' },
+          { x: 1400, y: this.groundLevel - 240, width: 120, height: 90, direction: 'up' },
+          // Elite tier slopes
+          { x: 700, y: this.groundLevel - 330, width: 120, height: 110, direction: 'up' },
+          { x: 1180, y: this.groundLevel - 360, width: 120, height: 80, direction: 'down' },
         ]
       }
     ];
