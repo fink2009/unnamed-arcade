@@ -103,6 +103,40 @@ class PlayerCharacter extends Entity {
     const gunY = this.y + this.height / 2;
     
     const result = weapon.fire(gunX, gunY, targetX, targetY, currentTime);
+    
+    // Multi-shot power-up: fire additional projectiles at slight angles
+    if (this.hasMultiShot && result) {
+      const projectiles = Array.isArray(result) ? result : [result];
+      const additionalProjectiles = [];
+      
+      projectiles.forEach(proj => {
+        // Calculate angle
+        const dx = targetX - gunX;
+        const dy = targetY - gunY;
+        const angle = Math.atan2(dy, dx);
+        
+        // Create two additional projectiles at +/- 15 degrees
+        const angleOffset = Math.PI / 12; // 15 degrees
+        
+        for (let offset of [-angleOffset, angleOffset]) {
+          const newAngle = angle + offset;
+          const speed = Math.sqrt(proj.dx * proj.dx + proj.dy * proj.dy);
+          const newProj = new Projectile(
+            gunX,
+            gunY,
+            Math.cos(newAngle) * speed,
+            Math.sin(newAngle) * speed,
+            proj.damage,
+            weapon
+          );
+          newProj.color = proj.color;
+          additionalProjectiles.push(newProj);
+        }
+      });
+      
+      return [...projectiles, ...additionalProjectiles];
+    }
+    
     return result;
   }
 
@@ -197,7 +231,20 @@ class PlayerCharacter extends Entity {
 
   takeDamage(amount) {
     if (!this.invulnerable) {
-      this.health -= amount;
+      // Check if player has shield power-up
+      if (this.hasShield && this.shieldHealth > 0) {
+        this.shieldHealth -= amount;
+        if (this.shieldHealth <= 0) {
+          // Shield depleted, apply overflow damage to health
+          const overflow = Math.abs(this.shieldHealth);
+          this.shieldHealth = 0;
+          this.hasShield = false;
+          this.health -= overflow;
+        }
+      } else {
+        this.health -= amount;
+      }
+      
       if (this.health <= 0) {
         this.health = 0;
         this.destroy();
@@ -285,11 +332,40 @@ class PlayerCharacter extends Entity {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(this.x, this.y + this.height, this.width, 5);
     
+    // Draw shield aura
+    if (this.hasShield && this.shieldHealth > 0) {
+      ctx.globalAlpha = 0.4;
+      ctx.strokeStyle = '#00aaff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = '#00aaff';
+      ctx.fillRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
+      ctx.globalAlpha = 1;
+    }
+    
     // Draw damage boost aura
     if (this.hasDamageBoost) {
       ctx.globalAlpha = 0.3;
       ctx.fillStyle = '#ff0000';
       ctx.fillRect(this.x - 3, this.y - 3, this.width + 6, this.height + 6);
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw rapid fire aura
+    if (this.hasRapidFire) {
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#ff6600';
+      ctx.fillRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw multi-shot indicator
+    if (this.hasMultiShot) {
+      ctx.globalAlpha = 0.3;
+      ctx.strokeStyle = '#ff00ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(this.x - 4, this.y - 4, this.width + 8, this.height + 8);
       ctx.globalAlpha = 1;
     }
     

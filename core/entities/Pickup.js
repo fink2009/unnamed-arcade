@@ -57,6 +57,20 @@ class Pickup extends Entity {
         this.color = '#00ffff';
         this.duration = 8000;
         break;
+      case 'powerup_rapid_fire':
+        this.color = '#ff6600';
+        this.duration = 8000;
+        this.fireRateMultiplier = 0.5; // Fire twice as fast
+        break;
+      case 'powerup_multi_shot':
+        this.color = '#ff00ff';
+        this.duration = 10000;
+        break;
+      case 'powerup_shield':
+        this.color = '#00aaff';
+        this.duration = 7000;
+        this.shieldHealth = 50;
+        break;
     }
   }
 
@@ -122,6 +136,46 @@ class Pickup extends Entity {
           }
         }, this.duration);
         break;
+      case 'powerup_rapid_fire':
+        // Store original fire rates for all weapons
+        const originalFireRates = player.weapons.map(w => w.fireRate);
+        player.weapons.forEach(w => {
+          w.fireRate = Math.floor(w.fireRate * this.fireRateMultiplier);
+        });
+        player.hasRapidFire = true;
+        player.rapidFireEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.weapons.forEach((w, i) => {
+              w.fireRate = originalFireRates[i];
+            });
+            player.hasRapidFire = false;
+            player.rapidFireEndTime = null;
+          }
+        }, this.duration);
+        break;
+      case 'powerup_multi_shot':
+        player.hasMultiShot = true;
+        player.multiShotEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.hasMultiShot = false;
+            player.multiShotEndTime = null;
+          }
+        }, this.duration);
+        break;
+      case 'powerup_shield':
+        player.hasShield = true;
+        player.shieldHealth = this.shieldHealth;
+        player.shieldEndTime = performance.now() + this.duration;
+        setTimeout(() => {
+          if (player.active) {
+            player.hasShield = false;
+            player.shieldHealth = 0;
+            player.shieldEndTime = null;
+          }
+        }, this.duration);
+        break;
     }
     this.destroy();
   }
@@ -149,6 +203,9 @@ class Pickup extends Entity {
     if (this.pickupType === 'health' || this.pickupType === 'healing') symbol = '+';
     else if (this.pickupType === 'ammo') symbol = 'A';
     else if (this.pickupType === 'damage_boost') symbol = 'D';
+    else if (this.pickupType === 'powerup_rapid_fire') symbol = 'R';
+    else if (this.pickupType === 'powerup_multi_shot') symbol = 'M';
+    else if (this.pickupType === 'powerup_shield') symbol = 'S';
     else if (this.pickupType.startsWith('weapon')) symbol = 'W';
     else if (this.pickupType.startsWith('powerup')) symbol = '*';
     

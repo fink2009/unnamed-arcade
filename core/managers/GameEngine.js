@@ -82,6 +82,11 @@ class GameEngine {
     this.hudOpacity = 0.9;
     this.colorBlindMode = 'none'; // none, protanopia, deuteranopia, tritanopia
     this.autoReload = true;
+    this.bloodEffects = true; // Toggle blood/gore effects
+    this.enemyAggression = 1.0; // Enemy behavior multiplier
+    this.bulletSpeed = 1.0; // Projectile speed multiplier
+    this.explosionSize = 1.0; // Explosion visual size multiplier
+    this.screenFlash = true; // Flash on damage/events
     this.settingsPage = 0; // For multi-page settings menu
     
     this.init();
@@ -452,6 +457,22 @@ class GameEngine {
           const modes = ['none', 'protanopia', 'deuteranopia', 'tritanopia'];
           const idx = modes.indexOf(this.colorBlindMode);
           this.colorBlindMode = modes[(idx + 1) % modes.length];
+        } else if (this.inputManager.wasKeyPressed('3')) {
+          this.bloodEffects = !this.bloodEffects;
+        } else if (this.inputManager.wasKeyPressed('4')) {
+          this.screenFlash = !this.screenFlash;
+        } else if (this.inputManager.wasKeyPressed('5')) {
+          this.enemyAggression = Math.max(0.5, this.enemyAggression - 0.1);
+        } else if (this.inputManager.wasKeyPressed('6')) {
+          this.enemyAggression = Math.min(2.0, this.enemyAggression + 0.1);
+        } else if (this.inputManager.wasKeyPressed('7')) {
+          this.bulletSpeed = Math.max(0.5, this.bulletSpeed - 0.1);
+        } else if (this.inputManager.wasKeyPressed('8')) {
+          this.bulletSpeed = Math.min(2.0, this.bulletSpeed + 0.1);
+        } else if (this.inputManager.wasKeyPressed('9')) {
+          this.explosionSize = Math.max(0.5, this.explosionSize - 0.1);
+        } else if (this.inputManager.wasKeyPressed('0')) {
+          this.explosionSize = Math.min(2.0, this.explosionSize + 0.1);
         }
       }
       
@@ -788,8 +809,13 @@ class GameEngine {
               );
               
               // Always spawn pickup when enemy is killed
-              // Common drops (70% chance)
-              let pickupTypes = ['health', 'ammo', 'healing', 'damage_boost'];
+              // Common drops (60% chance) - basic resources and power-ups
+              let pickupTypes = ['health', 'ammo', 'healing', 'damage_boost', 'powerup_speed', 'powerup_rapid_fire'];
+              
+              // Uncommon power-up drops (25% chance)
+              if (Math.random() < 0.25) {
+                pickupTypes = ['powerup_multi_shot', 'powerup_invincibility', 'powerup_shield', 'damage_boost'];
+              }
               
               // Rare weapon drops for elite enemies (20% chance)
               if ((enemy.enemyType === 'heavy' || enemy.enemyType === 'sniper') && Math.random() < 0.2) {
