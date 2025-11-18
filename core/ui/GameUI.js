@@ -179,6 +179,27 @@ class GameUI {
       ctx.fillText(`⚡ SPEED BOOST (${timeLeft}s)`, this.width / 2 + 80, powerupY);
       powerupY -= 20;
     }
+    if (player.hasRapidFire && player.rapidFireEndTime) {
+      const timeLeft = Math.ceil((player.rapidFireEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#ff6600';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🔥 RAPID FIRE (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasMultiShot && player.multiShotEndTime) {
+      const timeLeft = Math.ceil((player.multiShotEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#ff00ff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`✨ MULTI-SHOT (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
+    if (player.hasShield && player.shieldEndTime) {
+      const timeLeft = Math.ceil((player.shieldEndTime - currentTime) / 1000);
+      ctx.fillStyle = '#00aaff';
+      ctx.font = 'bold 14px monospace';
+      ctx.fillText(`🛡️ SHIELD: ${player.shieldHealth} (${timeLeft}s)`, this.width / 2 + 80, powerupY);
+      powerupY -= 20;
+    }
     
     // FPS counter
     if (window.game && window.game.showFPS) {
@@ -492,17 +513,32 @@ class GameUI {
         ctx.fillText('GAMEPLAY & ACCESSIBILITY', this.width / 2, 150);
         
         ctx.fillStyle = '#00ff00';
-        ctx.font = '16px monospace';
+        ctx.font = '14px monospace';
         
         const autoReload = window.game && window.game.autoReload ? 'ON' : 'OFF';
-        ctx.fillText(`1 - Auto Reload [${autoReload}]`, this.width / 2, 200);
+        ctx.fillText(`1 - Auto Reload [${autoReload}]`, this.width / 2, 185);
         
         const colorBlind = window.game ? window.game.colorBlindMode.toUpperCase() : 'NONE';
-        ctx.fillText(`2 - Color Blind Mode [${colorBlind}]`, this.width / 2, 230);
+        ctx.fillText(`2 - Color Blind Mode [${colorBlind}]`, this.width / 2, 210);
+        
+        const bloodEffects = window.game && window.game.bloodEffects ? 'ON' : 'OFF';
+        ctx.fillText(`3 - Blood Effects [${bloodEffects}]`, this.width / 2, 235);
+        
+        const screenFlash = window.game && window.game.screenFlash ? 'ON' : 'OFF';
+        ctx.fillText(`4 - Screen Flash [${screenFlash}]`, this.width / 2, 260);
+        
+        const enemyAggro = window.game ? window.game.enemyAggression.toFixed(1) : '1.0';
+        ctx.fillText(`5/6 - Enemy Aggression: ${enemyAggro}x`, this.width / 2, 285);
+        
+        const bulletSpd = window.game ? window.game.bulletSpeed.toFixed(1) : '1.0';
+        ctx.fillText(`7/8 - Bullet Speed: ${bulletSpd}x`, this.width / 2, 310);
+        
+        const explSize = window.game ? window.game.explosionSize.toFixed(1) : '1.0';
+        ctx.fillText(`9/0 - Explosion Size: ${explSize}x`, this.width / 2, 335);
         
         ctx.fillStyle = '#888';
-        ctx.font = '14px monospace';
-        ctx.fillText('More options coming soon...', this.width / 2, 300);
+        ctx.font = '12px monospace';
+        ctx.fillText('Tweak these settings to customize your experience', this.width / 2, 370);
       }
       
       ctx.fillStyle = '#888';

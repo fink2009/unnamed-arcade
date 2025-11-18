@@ -53,27 +53,27 @@ class PlayerCharacter extends Entity {
       case 'soldier':
         this.maxHealth = 100;
         this.baseSpeed = 4;
-        this.specialAbilityCooldown = 15000; // 15 seconds
+        this.specialAbilityCooldown = 12000; // Reduced from 15s to 12s
         this.specialAbilityName = 'Airstrike';
         break;
       case 'scout':
         this.maxHealth = 80;
         this.baseSpeed = 6;
         this.rollCooldown = -200; // Faster roll
-        this.specialAbilityCooldown = 10000; // 10 seconds
+        this.specialAbilityCooldown = 8000; // Reduced from 10s to 8s
         this.specialAbilityName = 'Sprint Boost';
         break;
       case 'heavy':
         this.maxHealth = 150;
         this.baseSpeed = 3;
-        this.specialAbilityCooldown = 20000; // 20 seconds
+        this.specialAbilityCooldown = 16000; // Reduced from 20s to 16s
         this.specialAbilityName = 'Shield';
         break;
       case 'medic':
         this.maxHealth = 90;
         this.baseSpeed = 4.5;
         this.healRate = 1; // Passive healing
-        this.specialAbilityCooldown = 12000; // 12 seconds
+        this.specialAbilityCooldown = 10000; // Reduced from 12s to 10s
         this.specialAbilityName = 'Med Pack';
         break;
     }
@@ -103,6 +103,40 @@ class PlayerCharacter extends Entity {
     const gunY = this.y + this.height / 2;
     
     const result = weapon.fire(gunX, gunY, targetX, targetY, currentTime);
+    
+    // Multi-shot power-up: fire additional projectiles at slight angles
+    if (this.hasMultiShot && result) {
+      const projectiles = Array.isArray(result) ? result : [result];
+      const additionalProjectiles = [];
+      
+      projectiles.forEach(proj => {
+        // Calculate angle
+        const dx = targetX - gunX;
+        const dy = targetY - gunY;
+        const angle = Math.atan2(dy, dx);
+        
+        // Create two additional projectiles at +/- 15 degrees
+        const angleOffset = Math.PI / 12; // 15 degrees
+        
+        for (let offset of [-angleOffset, angleOffset]) {
+          const newAngle = angle + offset;
+          const speed = Math.sqrt(proj.dx * proj.dx + proj.dy * proj.dy);
+          const newProj = new Projectile(
+            gunX,
+            gunY,
+            Math.cos(newAngle) * speed,
+            Math.sin(newAngle) * speed,
+            proj.damage,
+            weapon
+          );
+          newProj.color = proj.color;
+          additionalProjectiles.push(newProj);
+        }
+      });
+      
+      return [...projectiles, ...additionalProjectiles];
+    }
+    
     return result;
   }
 
@@ -145,11 +179,11 @@ class PlayerCharacter extends Entity {
     
     switch (this.characterType) {
       case 'soldier':
-        // Airstrike: Damage all enemies on screen (reduced damage for balance)
+        // Airstrike: Damage all enemies on screen (increased damage and range)
         if (gameEngine) {
           gameEngine.enemies.forEach(enemy => {
             if (enemy.active) {
-              enemy.takeDamage(30); // Reduced from 50 to 30
+              enemy.takeDamage(50); // Increased from 30 to 50
               gameEngine.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2,
@@ -163,31 +197,31 @@ class PlayerCharacter extends Entity {
         return 'airstrike';
         
       case 'scout':
-        // Sprint Boost: Increased speed for 5 seconds (balanced)
+        // Sprint Boost: Increased speed for 6 seconds (increased from 5s and more speed)
         const originalSpeed = this.speed;
-        this.speed = originalSpeed * 1.5; // Reduced from 2x to 1.5x
+        this.speed = originalSpeed * 2; // Increased from 1.5x to 2x
         setTimeout(() => {
           if (this.active) {
             this.speed = originalSpeed;
             this.specialAbilityActive = false;
           }
-        }, 5000);
+        }, 6000); // Increased from 5000 to 6000
         return 'sprint';
         
       case 'heavy':
-        // Shield: Invulnerability for 2.5 seconds (reduced from 3)
+        // Shield: Invulnerability for 3.5 seconds (increased from 2.5s)
         this.invulnerable = true;
         setTimeout(() => {
           if (this.active) {
             this.invulnerable = false;
             this.specialAbilityActive = false;
           }
-        }, 2500); // Reduced from 3000 to 2500
+        }, 3500); // Increased from 2500 to 3500
         return 'shield';
         
       case 'medic':
-        // Med Pack: Restore 40 HP (reduced from 50)
-        this.heal(40);
+        // Med Pack: Restore 60 HP (increased from 40)
+        this.heal(60);
         setTimeout(() => { this.specialAbilityActive = false; }, 500);
         return 'medpack';
     }
@@ -197,7 +231,20 @@ class PlayerCharacter extends Entity {
 
   takeDamage(amount) {
     if (!this.invulnerable) {
-      this.health -= amount;
+      // Check if player has shield power-up
+      if (this.hasShield && this.shieldHealth > 0) {
+        this.shieldHealth -= amount;
+        if (this.shieldHealth <= 0) {
+          // Shield depleted, apply overflow damage to health
+          const overflow = Math.abs(this.shieldHealth);
+          this.shieldHealth = 0;
+          this.hasShield = false;
+          this.health -= overflow;
+        }
+      } else {
+        this.health -= amount;
+      }
+      
       if (this.health <= 0) {
         this.health = 0;
         this.destroy();
@@ -285,11 +332,40 @@ class PlayerCharacter extends Entity {
     ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
     ctx.fillRect(this.x, this.y + this.height, this.width, 5);
     
+    // Draw shield aura
+    if (this.hasShield && this.shieldHealth > 0) {
+      ctx.globalAlpha = 0.4;
+      ctx.strokeStyle = '#00aaff';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
+      ctx.globalAlpha = 0.2;
+      ctx.fillStyle = '#00aaff';
+      ctx.fillRect(this.x - 5, this.y - 5, this.width + 10, this.height + 10);
+      ctx.globalAlpha = 1;
+    }
+    
     // Draw damage boost aura
     if (this.hasDamageBoost) {
       ctx.globalAlpha = 0.3;
       ctx.fillStyle = '#ff0000';
       ctx.fillRect(this.x - 3, this.y - 3, this.width + 6, this.height + 6);
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw rapid fire aura
+    if (this.hasRapidFire) {
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#ff6600';
+      ctx.fillRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+      ctx.globalAlpha = 1;
+    }
+    
+    // Draw multi-shot indicator
+    if (this.hasMultiShot) {
+      ctx.globalAlpha = 0.3;
+      ctx.strokeStyle = '#ff00ff';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(this.x - 4, this.y - 4, this.width + 8, this.height + 8);
       ctx.globalAlpha = 1;
     }
     

@@ -35,7 +35,7 @@ class GameEngine {
     this.enemies = [];
     this.projectiles = [];
     this.pickups = [];
-    this.obstacles = [];
+    this.covers = [];
     
     // Game stats
     this.score = 0;
@@ -82,6 +82,11 @@ class GameEngine {
     this.hudOpacity = 0.9;
     this.colorBlindMode = 'none'; // none, protanopia, deuteranopia, tritanopia
     this.autoReload = true;
+    this.bloodEffects = true; // Toggle blood/gore effects
+    this.enemyAggression = 1.0; // Enemy behavior multiplier
+    this.bulletSpeed = 1.0; // Projectile speed multiplier
+    this.explosionSize = 1.0; // Explosion visual size multiplier
+    this.screenFlash = true; // Flash on damage/events
     this.settingsPage = 0; // For multi-page settings menu
     
     this.init();
@@ -164,8 +169,12 @@ class GameEngine {
     this.enemies = [];
     this.projectiles = [];
     this.pickups = [];
+    this.covers = [];
     this.collisionSystem.clear();
     this.particleSystem.clear();
+    
+    // Spawn cover objects
+    this.spawnCovers();
     
     // Spawn initial enemies
     if (mode === 'survival') {
@@ -358,6 +367,17 @@ class GameEngine {
     }
   }
 
+  spawnCovers() {
+    // Spawn cover objects at regular intervals
+    for (let i = 0; i < this.worldWidth; i += 400) {
+      const x = i + 100;
+      const crateSize = 30;
+      const cover = new Cover(x, this.groundLevel - crateSize, crateSize, crateSize, 'crate');
+      this.covers.push(cover);
+      this.collisionSystem.add(cover);
+    }
+  }
+
   handleInput() {
     if (this.state === 'character_select' || this.menuState === 'character') {
       if (this.inputManager.wasKeyPressed('1')) {
@@ -437,6 +457,22 @@ class GameEngine {
           const modes = ['none', 'protanopia', 'deuteranopia', 'tritanopia'];
           const idx = modes.indexOf(this.colorBlindMode);
           this.colorBlindMode = modes[(idx + 1) % modes.length];
+        } else if (this.inputManager.wasKeyPressed('3')) {
+          this.bloodEffects = !this.bloodEffects;
+        } else if (this.inputManager.wasKeyPressed('4')) {
+          this.screenFlash = !this.screenFlash;
+        } else if (this.inputManager.wasKeyPressed('5')) {
+          this.enemyAggression = Math.max(0.5, this.enemyAggression - 0.1);
+        } else if (this.inputManager.wasKeyPressed('6')) {
+          this.enemyAggression = Math.min(2.0, this.enemyAggression + 0.1);
+        } else if (this.inputManager.wasKeyPressed('7')) {
+          this.bulletSpeed = Math.max(0.5, this.bulletSpeed - 0.1);
+        } else if (this.inputManager.wasKeyPressed('8')) {
+          this.bulletSpeed = Math.min(2.0, this.bulletSpeed + 0.1);
+        } else if (this.inputManager.wasKeyPressed('9')) {
+          this.explosionSize = Math.max(0.5, this.explosionSize - 0.1);
+        } else if (this.inputManager.wasKeyPressed('0')) {
+          this.explosionSize = Math.min(2.0, this.explosionSize + 0.1);
         }
       }
       
@@ -643,6 +679,7 @@ class GameEngine {
     this.enemies = this.enemies.filter(e => e.active);
     this.projectiles = this.projectiles.filter(p => p.active);
     this.pickups = this.pickups.filter(p => p.active);
+    this.covers = this.covers.filter(c => c.active);
     
     // Check wave/level completion
     this.enemiesRemaining = this.enemies.length;
@@ -659,6 +696,7 @@ class GameEngine {
         this.wave++;
         this.spawnWave();
         this.spawnPickups();
+        this.spawnCovers(); // Respawn covers for new wave
       }
     } else if (this.mode === 'campaign') {
       if (this.enemiesRemaining === 0) {
@@ -679,8 +717,10 @@ class GameEngine {
               this.enemies = [];
               this.projectiles = [];
               this.pickups = [];
+              this.covers = [];
               this.spawnCampaignEnemies();
               this.spawnPickups();
+              this.spawnCovers();
               this.state = 'playing';
               this.menuState = null;
               
@@ -769,8 +809,13 @@ class GameEngine {
               );
               
               // Always spawn pickup when enemy is killed
-              // Common drops (70% chance)
-              let pickupTypes = ['health', 'ammo', 'healing', 'damage_boost'];
+              // Common drops (60% chance) - basic resources and power-ups
+              let pickupTypes = ['health', 'ammo', 'healing', 'damage_boost', 'powerup_speed', 'powerup_rapid_fire'];
+              
+              // Uncommon power-up drops (25% chance)
+              if (Math.random() < 0.25) {
+                pickupTypes = ['powerup_multi_shot', 'powerup_invincibility', 'powerup_shield', 'damage_boost'];
+              }
               
               // Rare weapon drops for elite enemies (20% chance)
               if ((enemy.enemyType === 'heavy' || enemy.enemyType === 'sniper') && Math.random() < 0.2) {
@@ -812,6 +857,39 @@ class GameEngine {
           this.camera.shake(5, 200);
         }
       }
+    });
+    
+    // Projectiles vs Cover - bullets stop when hitting cover
+    this.projectiles.forEach(proj => {
+      if (!proj.active) return;
+      
+      this.covers.forEach(cover => {
+        if (cover.active && proj.collidesWith(cover)) {
+          // Destroy projectile when it hits cover
+          proj.destroy();
+          
+          // Damage cover slightly
+          const destroyed = cover.takeDamage(proj.damage * 0.1); // Cover takes 10% of bullet damage
+          
+          // Create small impact effect
+          this.particleSystem.createExplosion(
+            proj.x,
+            proj.y,
+            5,
+            '#654321'
+          );
+          
+          // If cover is destroyed, create debris
+          if (destroyed) {
+            this.particleSystem.createExplosion(
+              cover.x + cover.width / 2,
+              cover.y + cover.height / 2,
+              15,
+              '#654321'
+            );
+          }
+        }
+      });
     });
   }
 
@@ -882,23 +960,8 @@ class GameEngine {
       this.ctx.fillRect(i, this.groundLevel - height, 15, height);
     }
     
-    // Draw obstacles/cover (military crates)
-    this.ctx.fillStyle = '#654321';
-    for (let i = 0; i < this.worldWidth; i += 400) {
-      const x = i + 100;
-      const crateSize = 30;
-      this.ctx.fillRect(x, this.groundLevel - crateSize, crateSize, crateSize);
-      // Crate detail
-      this.ctx.strokeStyle = '#4a3219';
-      this.ctx.lineWidth = 2;
-      this.ctx.strokeRect(x, this.groundLevel - crateSize, crateSize, crateSize);
-      this.ctx.beginPath();
-      this.ctx.moveTo(x, this.groundLevel - crateSize / 2);
-      this.ctx.lineTo(x + crateSize, this.groundLevel - crateSize / 2);
-      this.ctx.moveTo(x + crateSize / 2, this.groundLevel - crateSize);
-      this.ctx.lineTo(x + crateSize / 2, this.groundLevel);
-      this.ctx.stroke();
-    }
+    // Draw cover objects (now as entities)
+    this.covers.forEach(c => c.render(this.ctx));
     
     // Draw pickups
     this.pickups.forEach(p => p.render(this.ctx));
