@@ -343,6 +343,19 @@ class GameEngine {
         
         const enemy = new EnemyUnit(x, this.groundLevel - (enemyGroup.type === 'boss' ? 70 : 48), enemyGroup.type);
         enemy.applyDifficulty(difficultyMultiplier);
+        
+        // Make final boss (level 7) significantly tougher
+        if (enemyGroup.type === 'boss' && this.currentLevel === 7) {
+          enemy.maxHealth *= 2.5; // 2.5x more health
+          enemy.health = enemy.maxHealth;
+          enemy.damage *= 1.8; // 1.8x more damage
+          enemy.speed *= 1.3; // 1.3x faster
+          enemy.shootCooldown *= 0.6; // Shoots 40% faster
+          enemy.aggroRange = 800; // Larger aggro range
+          enemy.attackRange = 700; // Attacks from further away
+          enemy.isFinalBoss = true; // Mark as final boss
+        }
+        
         this.enemies.push(enemy);
         this.collisionSystem.add(enemy);
       }
@@ -704,13 +717,16 @@ class GameEngine {
     this.handleCollisions();
     
     // Clean up inactive entities
-    this.enemies = this.enemies.filter(e => e.active);
+    this.enemies = this.enemies.filter(e => e.active && e.health > 0);
     this.projectiles = this.projectiles.filter(p => p.active);
     this.pickups = this.pickups.filter(p => p.active);
     this.covers = this.covers.filter(c => c.active);
     
+    // Also remove from collision system
+    this.collisionSystem.entities = this.collisionSystem.entities.filter(e => e.active);
+    
     // Check wave/level completion
-    this.enemiesRemaining = this.enemies.length;
+    this.enemiesRemaining = this.enemies.filter(e => e.active && e.health > 0).length;
     
     if (this.mode === 'survival') {
       if (this.enemiesRemaining === 0) {
@@ -864,7 +880,7 @@ class GameEngine {
       // Player projectiles hitting enemies
       if (proj.owner instanceof Weapon && proj.owner === this.player.getCurrentWeapon()) {
         this.enemies.forEach(enemy => {
-          if (enemy.active && proj.collidesWith(enemy)) {
+          if (enemy.active && proj.active && proj.collidesWith(enemy)) {
             const killed = enemy.takeDamage(proj.damage);
             proj.destroy();
             
