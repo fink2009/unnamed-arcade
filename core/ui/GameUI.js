@@ -80,11 +80,53 @@ class GameUI {
       ctx.fillText(`${weapon.currentAmmo}/${weapon.ammoCapacity}`, this.width - 150, this.height - 15);
     }
     
-    // Score
+    // Score and level info
     ctx.fillStyle = '#00ff00';
     ctx.fillText(`SCORE: ${gameState.score}`, this.width - 150, 20);
     ctx.fillStyle = '#ffff00';
     ctx.fillText(`KILLS: ${gameState.kills}`, this.width - 150, 40);
+    
+    // Mode and level/wave
+    if (gameState.mode === 'campaign') {
+      ctx.fillStyle = '#00aaff';
+      ctx.fillText(`LEVEL: ${window.game ? window.game.currentLevel : 1}/${window.game ? window.game.maxLevel : 10}`, 240, 20);
+      if (window.game && window.game.currentLevelName) {
+        ctx.fillStyle = '#aaaaaa';
+        ctx.font = '12px monospace';
+        ctx.fillText(window.game.currentLevelName, 240, 35);
+        ctx.font = 'bold 16px monospace';
+      }
+    } else if (gameState.mode === 'survival') {
+      ctx.fillStyle = '#00aaff';
+      ctx.fillText(`WAVE: ${gameState.wave}`, 240, 20);
+    }
+    
+    // Enemy count
+    ctx.fillStyle = '#ff6600';
+    ctx.fillText(`ENEMIES: ${gameState.enemiesRemaining}`, 240, 40);
+    
+    // Combo display
+    if (gameState.combo > 1) {
+      ctx.fillStyle = '#ff6600';
+      ctx.font = 'bold 24px monospace';
+      const comboX = this.width / 2 - 50;
+      const comboY = 80;
+      
+      // Pulsing effect
+      const pulseScale = 1 + Math.sin(Date.now() / 100) * 0.1;
+      ctx.save();
+      ctx.translate(comboX + 50, comboY);
+      ctx.scale(pulseScale, pulseScale);
+      ctx.translate(-(comboX + 50), -comboY);
+      
+      ctx.fillStyle = '#000000';
+      ctx.fillText(`${gameState.combo}x COMBO!`, comboX + 2, comboY + 2);
+      ctx.fillStyle = '#ff6600';
+      ctx.fillText(`${gameState.combo}x COMBO!`, comboX, comboY);
+      
+      ctx.restore();
+      ctx.font = 'bold 16px monospace';
+    }
     
     // Special Ability indicator
     if (player.specialAbilityName) {

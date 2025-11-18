@@ -413,9 +413,20 @@ class GameEngine {
     
     for (let i = 0; i < 5; i++) {
       const x = 300 + i * 400 + Math.random() * 100;
-      const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+      let y = this.groundLevel - 30;
       
-      const pickup = new Pickup(x, this.groundLevel - 30, type);
+      // Check if there's a platform at this position and spawn on it
+      let spawnedOnPlatform = false;
+      for (const platform of this.platforms) {
+        if (x >= platform.x && x <= platform.x + platform.width) {
+          y = platform.y - 30;
+          spawnedOnPlatform = true;
+          break;
+        }
+      }
+      
+      const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+      const pickup = new Pickup(x, y, type);
       this.pickups.push(pickup);
       this.collisionSystem.add(pickup);
     }
