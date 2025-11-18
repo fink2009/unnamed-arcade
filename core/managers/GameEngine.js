@@ -457,7 +457,7 @@ class GameEngine {
   }
 
   spawnPickups() {
-    const pickupTypes = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun'];
+    const pickupTypes = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun', 'weapon_knife', 'weapon_sword', 'weapon_axe'];
     
     for (let i = 0; i < 5; i++) {
       const x = 300 + i * 400 + Math.random() * 100;
