@@ -30,6 +30,10 @@ class GameEngine {
     this.groundLevel = canvas.height - 50;
     this.camera = new Camera(canvas.width, canvas.height, this.worldWidth, this.worldHeight);
     
+    // Level terrain (platforms, slopes, etc.)
+    this.platforms = [];
+    this.slopes = [];
+    
     // Game objects
     this.player = null;
     this.enemies = [];
@@ -178,6 +182,9 @@ class GameEngine {
     
     // Spawn cover objects
     this.spawnCovers();
+    
+    // Spawn level terrain (platforms, slopes)
+    this.spawnLevelTerrain();
     
     // Spawn initial enemies
     if (mode === 'survival') {
@@ -392,6 +399,134 @@ class GameEngine {
       this.covers.push(cover);
       this.collisionSystem.add(cover);
     }
+  }
+  
+  spawnLevelTerrain() {
+    // Clear existing terrain
+    this.platforms = [];
+    this.slopes = [];
+    
+    // Create terrain based on current level
+    const terrainConfig = this.getLevelTerrainConfig();
+    
+    // Spawn platforms
+    if (terrainConfig.platforms) {
+      terrainConfig.platforms.forEach(pData => {
+        const platform = new Platform(pData.x, pData.y, pData.width, pData.height, pData.type || 'solid');
+        this.platforms.push(platform);
+      });
+    }
+    
+    // Spawn slopes
+    if (terrainConfig.slopes) {
+      terrainConfig.slopes.forEach(sData => {
+        const slope = new Slope(sData.x, sData.y, sData.width, sData.height, sData.direction);
+        this.slopes.push(slope);
+      });
+    }
+  }
+  
+  getLevelTerrainConfig() {
+    // Define unique terrain for each level (Gunstar Heroes / Contra style)
+    const terrainConfigs = [
+      // Level 1: Basic Training - Simple ground with a few platforms
+      {
+        platforms: [
+          { x: 600, y: this.groundLevel - 120, width: 150, height: 20, type: 'passthrough' },
+          { x: 1200, y: this.groundLevel - 100, width: 180, height: 20, type: 'passthrough' },
+        ],
+        slopes: []
+      },
+      
+      // Level 2: First Contact - Multiple elevations and slopes
+      {
+        platforms: [
+          { x: 400, y: this.groundLevel - 140, width: 200, height: 20, type: 'passthrough' },
+          { x: 900, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
+          { x: 1400, y: this.groundLevel - 120, width: 200, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 200, y: this.groundLevel - 80, width: 150, height: 80, direction: 'up' },
+          { x: 1600, y: this.groundLevel - 100, width: 180, height: 100, direction: 'down' },
+        ]
+      },
+      
+      // Level 3: Boss Arena - Multi-floor arena with cover
+      {
+        platforms: [
+          { x: 300, y: this.groundLevel - 150, width: 250, height: 25, type: 'solid' },
+          { x: 800, y: this.groundLevel - 200, width: 300, height: 25, type: 'solid' },
+          { x: 1300, y: this.groundLevel - 150, width: 250, height: 25, type: 'solid' },
+          { x: 600, y: this.groundLevel - 250, width: 400, height: 25, type: 'passthrough' },
+        ],
+        slopes: []
+      },
+      
+      // Level 4: Heavy Assault - Complex multi-level with slopes
+      {
+        platforms: [
+          { x: 300, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
+          { x: 700, y: this.groundLevel - 200, width: 250, height: 20, type: 'passthrough' },
+          { x: 1100, y: this.groundLevel - 160, width: 220, height: 20, type: 'passthrough' },
+          { x: 1500, y: this.groundLevel - 220, width: 280, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 520, y: this.groundLevel - 130, width: 180, height: 70, direction: 'up' },
+          { x: 950, y: this.groundLevel - 200, width: 150, height: 40, direction: 'down' },
+          { x: 1320, y: this.groundLevel - 160, width: 180, height: 60, direction: 'up' },
+        ]
+      },
+      
+      // Level 5: Sniper Alley - Vertical emphasis with high platforms
+      {
+        platforms: [
+          { x: 350, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
+          { x: 700, y: this.groundLevel - 260, width: 200, height: 20, type: 'passthrough' },
+          { x: 1050, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
+          { x: 1400, y: this.groundLevel - 280, width: 220, height: 20, type: 'passthrough' },
+          { x: 500, y: this.groundLevel - 340, width: 250, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 200, y: this.groundLevel - 120, width: 150, height: 120, direction: 'up' },
+        ]
+      },
+      
+      // Level 6: Boss Arena - Large multi-tiered combat zone
+      {
+        platforms: [
+          { x: 250, y: this.groundLevel - 140, width: 280, height: 30, type: 'solid' },
+          { x: 750, y: this.groundLevel - 220, width: 350, height: 30, type: 'solid' },
+          { x: 1300, y: this.groundLevel - 140, width: 280, height: 30, type: 'solid' },
+          { x: 500, y: this.groundLevel - 300, width: 500, height: 25, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 100, y: this.groundLevel - 140, width: 150, height: 140, direction: 'up' },
+          { x: 1580, y: this.groundLevel - 140, width: 150, height: 140, direction: 'down' },
+        ]
+      },
+      
+      // Level 7: Final Stand - Most complex with everything
+      {
+        platforms: [
+          { x: 250, y: this.groundLevel - 150, width: 200, height: 20, type: 'passthrough' },
+          { x: 600, y: this.groundLevel - 220, width: 250, height: 25, type: 'solid' },
+          { x: 1000, y: this.groundLevel - 180, width: 200, height: 20, type: 'passthrough' },
+          { x: 1350, y: this.groundLevel - 260, width: 280, height: 25, type: 'solid' },
+          { x: 400, y: this.groundLevel - 320, width: 300, height: 20, type: 'passthrough' },
+          { x: 1100, y: this.groundLevel - 350, width: 350, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 150, y: this.groundLevel - 100, width: 100, height: 100, direction: 'up' },
+          { x: 450, y: this.groundLevel - 150, width: 150, height: 70, direction: 'up' },
+          { x: 850, y: this.groundLevel - 220, width: 150, height: 40, direction: 'down' },
+          { x: 1250, y: this.groundLevel - 180, width: 100, height: 80, direction: 'up' },
+          { x: 1630, y: this.groundLevel - 260, width: 170, height: 120, direction: 'down' },
+        ]
+      }
+    ];
+    
+    const levelIndex = Math.min(this.currentLevel - 1, terrainConfigs.length - 1);
+    return terrainConfigs[levelIndex];
   }
 
   handleInput() {
@@ -721,6 +856,8 @@ class GameEngine {
     this.projectiles = this.projectiles.filter(p => p.active);
     this.pickups = this.pickups.filter(p => p.active);
     this.covers = this.covers.filter(c => c.active);
+    this.platforms = this.platforms.filter(p => p.active);
+    this.slopes = this.slopes.filter(s => s.active);
     
     // Also remove from collision system
     this.collisionSystem.entities = this.collisionSystem.entities.filter(e => e.active);
@@ -762,9 +899,12 @@ class GameEngine {
               this.projectiles = [];
               this.pickups = [];
               this.covers = [];
+              this.platforms = [];
+              this.slopes = [];
               this.spawnCampaignEnemies();
               this.spawnPickups();
               this.spawnCovers();
+              this.spawnLevelTerrain();
               this.state = 'playing';
               this.menuState = null;
               
@@ -839,6 +979,64 @@ class GameEngine {
               this.player.y = coverBounds.bottom;
               this.player.dy = 0;
             }
+          }
+        }
+      });
+      
+      // Player vs Platforms
+      this.platforms.forEach(platform => {
+        if (platform.active) {
+          const playerBounds = this.player.getBounds();
+          const platformBounds = platform.getBounds();
+          
+          // Check if player is falling onto platform from above
+          if (this.player.dy >= 0 && 
+              playerBounds.bottom <= platformBounds.top + 10 &&
+              playerBounds.bottom >= platformBounds.top - 5 &&
+              playerBounds.right > platformBounds.left &&
+              playerBounds.left < platformBounds.right) {
+            // Land on platform
+            this.player.y = platformBounds.top - this.player.height;
+            this.player.dy = 0;
+            this.player.onGround = true;
+          }
+          
+          // For solid platforms, also block horizontal and upward movement
+          if (platform.platformType === 'solid' && this.player.collidesWith(platform)) {
+            const overlapLeft = playerBounds.right - platformBounds.left;
+            const overlapRight = platformBounds.right - playerBounds.left;
+            const overlapTop = playerBounds.bottom - platformBounds.top;
+            const overlapBottom = platformBounds.bottom - playerBounds.top;
+            
+            const minOverlapX = Math.min(overlapLeft, overlapRight);
+            const minOverlapY = Math.min(overlapTop, overlapBottom);
+            
+            if (minOverlapX < minOverlapY) {
+              // Push horizontally
+              if (overlapLeft < overlapRight) {
+                this.player.x = platformBounds.left - this.player.width;
+              } else {
+                this.player.x = platformBounds.right;
+              }
+              this.player.dx = 0;
+            }
+          }
+        }
+      });
+      
+      // Player vs Slopes
+      this.slopes.forEach(slope => {
+        if (slope.active) {
+          const playerCenterX = this.player.x + this.player.width / 2;
+          const playerBottom = this.player.y + this.player.height;
+          
+          const slopeY = slope.getYAtX(playerCenterX);
+          
+          if (slopeY !== null && playerBottom >= slopeY - 5 && playerBottom <= slopeY + 10) {
+            // Player is on the slope
+            this.player.y = slopeY - this.player.height;
+            this.player.dy = 0;
+            this.player.onGround = true;
           }
         }
       });
@@ -1091,6 +1289,12 @@ class GameEngine {
     
     // Layer 4: Ground with detailed tiles
     this.draw16BitGround();
+    
+    // Draw slopes first (part of terrain)
+    this.slopes.forEach(s => s.render(this.ctx));
+    
+    // Draw platforms
+    this.platforms.forEach(p => p.render(this.ctx));
     
     // Draw cover objects (now as entities)
     this.covers.forEach(c => c.render(this.ctx));
