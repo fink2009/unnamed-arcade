@@ -4,6 +4,8 @@ class GameEngine {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     
+    // Game Engine initialized with comprehensive improvements
+    
     // Game state
     this.state = 'loading'; // loading, menu, character_select, playing, paused, gameover, victory
     this.mode = 'campaign'; // campaign, survival, multiplayer
@@ -30,6 +32,10 @@ class GameEngine {
     this.groundLevel = canvas.height - 50;
     this.camera = new Camera(canvas.width, canvas.height, this.worldWidth, this.worldHeight);
     
+    // Level terrain (platforms, slopes, etc.)
+    this.platforms = [];
+    this.slopes = [];
+    
     // Game objects
     this.player = null;
     this.enemies = [];
@@ -42,7 +48,7 @@ class GameEngine {
     this.kills = 0;
     this.wave = 1;
     this.currentLevel = 1; // Campaign level
-    this.maxLevel = 7; // Total campaign levels including boss arenas
+    this.maxLevel = 10; // Total campaign levels including boss arenas
     this.enemiesRemaining = 0;
     this.waveTimer = 0;
     this.waveDuration = 30000; // 30 seconds per wave
@@ -58,6 +64,9 @@ class GameEngine {
     this.bossesKilled = 0;
     this.weaponsCollected = 0;
     this.damageTakenThisWave = 0;
+    
+    // Weapon swap system
+    this.weaponSwapPopup = null; // {weapon: Weapon, pickup: Pickup}
     
     // Timing
     this.lastTime = 0;
@@ -175,6 +184,9 @@ class GameEngine {
     
     // Spawn cover objects
     this.spawnCovers();
+    
+    // Spawn level terrain (platforms, slopes)
+    this.spawnLevelTerrain();
     
     // Spawn initial enemies
     if (mode === 'survival') {
@@ -295,15 +307,46 @@ class GameEngine {
         ],
         isBossLevel: true
       },
-      // Level 7: Final Stand - Maximum difficulty
+      // Level 7: Urban Warfare - City ruins with multi-tier combat
+      {
+        name: 'Urban Warfare',
+        enemies: [
+          { type: 'infantry', count: 5, spacing: 280 },
+          { type: 'heavy', count: 3, spacing: 450 },
+          { type: 'sniper', count: 4, spacing: 550 },
+          { type: 'scout', count: 4, spacing: 320 }
+        ]
+      },
+      // Level 8: Industrial Complex - Factory with moving platforms feel
+      {
+        name: 'Industrial Complex',
+        enemies: [
+          { type: 'infantry', count: 6, spacing: 300 },
+          { type: 'heavy', count: 4, spacing: 420 },
+          { type: 'sniper', count: 3, spacing: 600 },
+          { type: 'scout', count: 5, spacing: 340 }
+        ]
+      },
+      // Level 9: Elite Commander Boss - Toughest boss before final
+      {
+        name: 'Boss Arena: Elite Commander',
+        enemies: [
+          { type: 'heavy', count: 3, spacing: 450 },
+          { type: 'sniper', count: 3, spacing: 650 },
+          { type: 'scout', count: 2, spacing: 400 },
+          { type: 'boss', count: 1, spacing: 0, position: 1900 }
+        ],
+        isBossLevel: true
+      },
+      // Level 10: Final Stand - Maximum difficulty ultimate level
       {
         name: 'Final Stand',
         enemies: [
-          { type: 'infantry', count: 4, spacing: 250 },
-          { type: 'heavy', count: 3, spacing: 400 },
-          { type: 'sniper', count: 3, spacing: 500 },
-          { type: 'scout', count: 3, spacing: 350 },
-          { type: 'boss', count: 1, spacing: 0, position: 2000 }
+          { type: 'infantry', count: 5, spacing: 250 },
+          { type: 'heavy', count: 4, spacing: 400 },
+          { type: 'sniper', count: 4, spacing: 500 },
+          { type: 'scout', count: 4, spacing: 350 },
+          { type: 'boss', count: 1, spacing: 0, position: 2200 }
         ],
         isBossLevel: true
       }
@@ -340,6 +383,19 @@ class GameEngine {
         
         const enemy = new EnemyUnit(x, this.groundLevel - (enemyGroup.type === 'boss' ? 70 : 48), enemyGroup.type);
         enemy.applyDifficulty(difficultyMultiplier);
+        
+        // Make final boss (level 10) significantly tougher
+        if (enemyGroup.type === 'boss' && this.currentLevel === 10) {
+          enemy.maxHealth *= 2.5; // 2.5x more health
+          enemy.health = enemy.maxHealth;
+          enemy.damage *= 1.8; // 1.8x more damage
+          enemy.speed *= 1.3; // 1.3x faster
+          enemy.shootCooldown *= 0.6; // Shoots 40% faster
+          enemy.aggroRange = 800; // Larger aggro range
+          enemy.attackRange = 700; // Attacks from further away
+          enemy.isFinalBoss = true; // Mark as final boss
+        }
+        
         this.enemies.push(enemy);
         this.collisionSystem.add(enemy);
       }
@@ -359,9 +415,20 @@ class GameEngine {
     
     for (let i = 0; i < 5; i++) {
       const x = 300 + i * 400 + Math.random() * 100;
-      const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+      let y = this.groundLevel - 30;
       
-      const pickup = new Pickup(x, this.groundLevel - 30, type);
+      // Check if there's a platform at this position and spawn on it
+      let spawnedOnPlatform = false;
+      for (const platform of this.platforms) {
+        if (x >= platform.x && x <= platform.x + platform.width) {
+          y = platform.y - 30;
+          spawnedOnPlatform = true;
+          break;
+        }
+      }
+      
+      const type = pickupTypes[Math.floor(Math.random() * pickupTypes.length)];
+      const pickup = new Pickup(x, y, type);
       this.pickups.push(pickup);
       this.collisionSystem.add(pickup);
     }
@@ -376,6 +443,182 @@ class GameEngine {
       this.covers.push(cover);
       this.collisionSystem.add(cover);
     }
+  }
+  
+  spawnLevelTerrain() {
+    // Clear existing terrain
+    this.platforms = [];
+    this.slopes = [];
+    
+    // Create terrain based on current level
+    const terrainConfig = this.getLevelTerrainConfig();
+    
+    // Spawn platforms
+    if (terrainConfig.platforms) {
+      terrainConfig.platforms.forEach(pData => {
+        const platform = new Platform(pData.x, pData.y, pData.width, pData.height, pData.type || 'solid');
+        this.platforms.push(platform);
+      });
+    }
+    
+    // Spawn slopes
+    if (terrainConfig.slopes) {
+      terrainConfig.slopes.forEach(sData => {
+        const slope = new Slope(sData.x, sData.y, sData.width, sData.height, sData.direction);
+        this.slopes.push(slope);
+      });
+    }
+  }
+  
+  getLevelTerrainConfig() {
+    // Define unique terrain for each level (Gunstar Heroes / Contra style)
+    const terrainConfigs = [
+      // Level 1: Basic Training - Simple ground with a few platforms
+      {
+        platforms: [
+          { x: 600, y: this.groundLevel - 120, width: 150, height: 20, type: 'passthrough' },
+          { x: 1200, y: this.groundLevel - 100, width: 180, height: 20, type: 'passthrough' },
+        ],
+        slopes: []
+      },
+      
+      // Level 2: First Contact - Multiple elevations and slopes
+      {
+        platforms: [
+          { x: 400, y: this.groundLevel - 140, width: 200, height: 20, type: 'passthrough' },
+          { x: 900, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
+          { x: 1400, y: this.groundLevel - 120, width: 200, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 200, y: this.groundLevel - 80, width: 150, height: 80, direction: 'up' },
+          { x: 1600, y: this.groundLevel - 100, width: 180, height: 100, direction: 'down' },
+        ]
+      },
+      
+      // Level 3: Boss Arena - Multi-floor arena with cover
+      {
+        platforms: [
+          { x: 300, y: this.groundLevel - 150, width: 250, height: 25, type: 'solid' },
+          { x: 800, y: this.groundLevel - 200, width: 300, height: 25, type: 'solid' },
+          { x: 1300, y: this.groundLevel - 150, width: 250, height: 25, type: 'solid' },
+          { x: 600, y: this.groundLevel - 250, width: 400, height: 25, type: 'passthrough' },
+        ],
+        slopes: []
+      },
+      
+      // Level 4: Heavy Assault - Complex multi-level with slopes
+      {
+        platforms: [
+          { x: 300, y: this.groundLevel - 130, width: 200, height: 20, type: 'passthrough' },
+          { x: 700, y: this.groundLevel - 200, width: 250, height: 20, type: 'passthrough' },
+          { x: 1100, y: this.groundLevel - 160, width: 220, height: 20, type: 'passthrough' },
+          { x: 1500, y: this.groundLevel - 220, width: 280, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 520, y: this.groundLevel - 130, width: 180, height: 70, direction: 'up' },
+          { x: 950, y: this.groundLevel - 200, width: 150, height: 40, direction: 'down' },
+          { x: 1320, y: this.groundLevel - 160, width: 180, height: 60, direction: 'up' },
+        ]
+      },
+      
+      // Level 5: Sniper Alley - Vertical emphasis with high platforms
+      {
+        platforms: [
+          { x: 350, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
+          { x: 700, y: this.groundLevel - 260, width: 200, height: 20, type: 'passthrough' },
+          { x: 1050, y: this.groundLevel - 180, width: 180, height: 20, type: 'passthrough' },
+          { x: 1400, y: this.groundLevel - 280, width: 220, height: 20, type: 'passthrough' },
+          { x: 500, y: this.groundLevel - 340, width: 250, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 200, y: this.groundLevel - 120, width: 150, height: 120, direction: 'up' },
+        ]
+      },
+      
+      // Level 6: Boss Arena - Large multi-tiered combat zone
+      {
+        platforms: [
+          { x: 250, y: this.groundLevel - 140, width: 280, height: 30, type: 'solid' },
+          { x: 750, y: this.groundLevel - 220, width: 350, height: 30, type: 'solid' },
+          { x: 1300, y: this.groundLevel - 140, width: 280, height: 30, type: 'solid' },
+          { x: 500, y: this.groundLevel - 300, width: 500, height: 25, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 100, y: this.groundLevel - 140, width: 150, height: 140, direction: 'up' },
+          { x: 1580, y: this.groundLevel - 140, width: 150, height: 140, direction: 'down' },
+        ]
+      },
+      
+      // Level 7: Urban Warfare - City ruins feel with scattered platforms
+      {
+        platforms: [
+          { x: 280, y: this.groundLevel - 130, width: 160, height: 20, type: 'passthrough' },
+          { x: 600, y: this.groundLevel - 200, width: 200, height: 25, type: 'solid' },
+          { x: 950, y: this.groundLevel - 150, width: 180, height: 20, type: 'passthrough' },
+          { x: 1280, y: this.groundLevel - 220, width: 240, height: 25, type: 'solid' },
+          { x: 450, y: this.groundLevel - 290, width: 280, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 180, y: this.groundLevel - 90, width: 100, height: 90, direction: 'up' },
+          { x: 800, y: this.groundLevel - 200, width: 150, height: 50, direction: 'down' },
+          { x: 1520, y: this.groundLevel - 180, width: 140, height: 90, direction: 'down' },
+        ]
+      },
+      
+      // Level 8: Industrial Complex - Dense platforms simulating factory floors
+      {
+        platforms: [
+          { x: 200, y: this.groundLevel - 140, width: 220, height: 25, type: 'solid' },
+          { x: 500, y: this.groundLevel - 210, width: 260, height: 25, type: 'solid' },
+          { x: 850, y: this.groundLevel - 150, width: 200, height: 25, type: 'solid' },
+          { x: 1150, y: this.groundLevel - 240, width: 300, height: 25, type: 'solid' },
+          { x: 350, y: this.groundLevel - 310, width: 320, height: 20, type: 'passthrough' },
+          { x: 900, y: this.groundLevel - 330, width: 350, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 420, y: this.groundLevel - 140, width: 80, height: 70, direction: 'up' },
+          { x: 760, y: this.groundLevel - 210, width: 90, height: 60, direction: 'down' },
+          { x: 1050, y: this.groundLevel - 150, width: 100, height: 90, direction: 'up' },
+        ]
+      },
+      
+      // Level 9: Elite Commander Boss - Large arena with strategic positions
+      {
+        platforms: [
+          { x: 280, y: this.groundLevel - 160, width: 300, height: 30, type: 'solid' },
+          { x: 800, y: this.groundLevel - 240, width: 380, height: 30, type: 'solid' },
+          { x: 1350, y: this.groundLevel - 160, width: 300, height: 30, type: 'solid' },
+          { x: 550, y: this.groundLevel - 320, width: 600, height: 25, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 120, y: this.groundLevel - 160, width: 160, height: 160, direction: 'up' },
+          { x: 1650, y: this.groundLevel - 160, width: 160, height: 160, direction: 'down' },
+        ]
+      },
+      
+      // Level 10: Final Stand - Most complex and challenging terrain
+      {
+        platforms: [
+          { x: 230, y: this.groundLevel - 140, width: 190, height: 20, type: 'passthrough' },
+          { x: 550, y: this.groundLevel - 210, width: 240, height: 25, type: 'solid' },
+          { x: 920, y: this.groundLevel - 170, width: 200, height: 20, type: 'passthrough' },
+          { x: 1250, y: this.groundLevel - 250, width: 270, height: 25, type: 'solid' },
+          { x: 400, y: this.groundLevel - 310, width: 290, height: 20, type: 'passthrough' },
+          { x: 1000, y: this.groundLevel - 340, width: 340, height: 20, type: 'passthrough' },
+          { x: 600, y: this.groundLevel - 400, width: 500, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 140, y: this.groundLevel - 95, width: 90, height: 95, direction: 'up' },
+          { x: 420, y: this.groundLevel - 140, width: 130, height: 70, direction: 'up' },
+          { x: 790, y: this.groundLevel - 210, width: 130, height: 40, direction: 'down' },
+          { x: 1120, y: this.groundLevel - 170, width: 130, height: 80, direction: 'up' },
+          { x: 1520, y: this.groundLevel - 250, width: 150, height: 110, direction: 'down' },
+        ]
+      }
+    ];
+    
+    const levelIndex = Math.min(this.currentLevel - 1, terrainConfigs.length - 1);
+    return terrainConfigs[levelIndex];
   }
 
   handleInput() {
@@ -586,6 +829,31 @@ class GameEngine {
         this.state = 'paused';
         this.menuState = 'paused';
       }
+    } else if (this.state === 'weaponswap') {
+      // Weapon swap popup handling
+      if (this.inputManager.wasKeyPressed('y') || this.inputManager.wasKeyPressed('Y') || this.inputManager.wasKeyPressed('1')) {
+        // YES - Choose which weapon to swap
+        this.state = 'weaponswapselect';
+      } else if (this.inputManager.wasKeyPressed('n') || this.inputManager.wasKeyPressed('N') || this.inputManager.wasKeyPressed('2') || this.inputManager.wasKeyPressed('Escape')) {
+        // NO - Leave weapon on ground
+        this.weaponSwapPopup = null;
+        this.state = 'playing';
+      }
+    } else if (this.state === 'weaponswapselect') {
+      // Choose which weapon slot to replace
+      if (this.inputManager.wasKeyPressed('1')) {
+        this.swapWeapon(0);
+      } else if (this.inputManager.wasKeyPressed('2')) {
+        this.swapWeapon(1);
+      } else if (this.inputManager.wasKeyPressed('3')) {
+        this.swapWeapon(2);
+      } else if (this.inputManager.wasKeyPressed('4')) {
+        this.swapWeapon(3);
+      } else if (this.inputManager.wasKeyPressed('Escape')) {
+        // Cancel swap
+        this.weaponSwapPopup = null;
+        this.state = 'playing';
+      }
     } else if (this.state === 'paused') {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.state = 'playing';
@@ -676,13 +944,18 @@ class GameEngine {
     this.handleCollisions();
     
     // Clean up inactive entities
-    this.enemies = this.enemies.filter(e => e.active);
+    this.enemies = this.enemies.filter(e => e.active && e.health > 0);
     this.projectiles = this.projectiles.filter(p => p.active);
     this.pickups = this.pickups.filter(p => p.active);
     this.covers = this.covers.filter(c => c.active);
+    this.platforms = this.platforms.filter(p => p.active);
+    this.slopes = this.slopes.filter(s => s.active);
+    
+    // Also remove from collision system
+    this.collisionSystem.entities = this.collisionSystem.entities.filter(e => e.active);
     
     // Check wave/level completion
-    this.enemiesRemaining = this.enemies.length;
+    this.enemiesRemaining = this.enemies.filter(e => e.active && e.health > 0).length;
     
     if (this.mode === 'survival') {
       if (this.enemiesRemaining === 0) {
@@ -718,9 +991,12 @@ class GameEngine {
               this.projectiles = [];
               this.pickups = [];
               this.covers = [];
+              this.platforms = [];
+              this.slopes = [];
               this.spawnCampaignEnemies();
               this.spawnPickups();
               this.spawnCovers();
+              this.spawnLevelTerrain();
               this.state = 'playing';
               this.menuState = null;
               
@@ -739,16 +1015,156 @@ class GameEngine {
     }
   }
 
+  swapWeapon(slotIndex) {
+    if (this.weaponSwapPopup && this.player && slotIndex >= 0 && slotIndex < this.player.weapons.length) {
+      // Replace weapon in selected slot
+      this.player.weapons[slotIndex] = this.weaponSwapPopup.weapon;
+      
+      // Destroy the pickup
+      this.weaponSwapPopup.pickup.destroy();
+      
+      // Track weapon collection
+      this.weaponsCollected++;
+      this.score += 50;
+      
+      // Clear popup
+      this.weaponSwapPopup = null;
+      this.state = 'playing';
+    }
+  }
+
   handleCollisions() {
+    // Player vs Cover - make covers solid
+    if (this.player && this.player.active) {
+      this.covers.forEach(cover => {
+        if (cover.active && this.player.collidesWith(cover)) {
+          // Calculate overlap and push player out
+          const playerBounds = this.player.getBounds();
+          const coverBounds = cover.getBounds();
+          
+          // Calculate overlaps on each side
+          const overlapLeft = playerBounds.right - coverBounds.left;
+          const overlapRight = coverBounds.right - playerBounds.left;
+          const overlapTop = playerBounds.bottom - coverBounds.top;
+          const overlapBottom = coverBounds.bottom - playerBounds.top;
+          
+          // Find minimum overlap (the side with least penetration)
+          const minOverlapX = Math.min(overlapLeft, overlapRight);
+          const minOverlapY = Math.min(overlapTop, overlapBottom);
+          
+          // Push player out on the axis with least overlap
+          if (minOverlapX < minOverlapY) {
+            // Push horizontally
+            if (overlapLeft < overlapRight) {
+              this.player.x = coverBounds.left - this.player.width;
+            } else {
+              this.player.x = coverBounds.right;
+            }
+            this.player.dx = 0;
+          } else {
+            // Push vertically
+            if (overlapTop < overlapBottom) {
+              this.player.y = coverBounds.top - this.player.height;
+              this.player.dy = 0;
+              this.player.onGround = true;
+            } else {
+              this.player.y = coverBounds.bottom;
+              this.player.dy = 0;
+            }
+          }
+        }
+      });
+      
+      // Player vs Platforms
+      this.platforms.forEach(platform => {
+        if (platform.active) {
+          const playerBounds = this.player.getBounds();
+          const platformBounds = platform.getBounds();
+          
+          // Check if player is falling onto platform from above
+          if (this.player.dy >= 0 && 
+              playerBounds.bottom <= platformBounds.top + 10 &&
+              playerBounds.bottom >= platformBounds.top - 5 &&
+              playerBounds.right > platformBounds.left + 5 &&
+              playerBounds.left < platformBounds.right - 5) {
+            // Land on platform
+            this.player.y = platformBounds.top - this.player.height;
+            this.player.dy = 0;
+            this.player.onGround = true;
+          }
+          
+          // For solid platforms, also block horizontal and upward movement
+          if (platform.platformType === 'solid' && this.player.collidesWith(platform)) {
+            const overlapLeft = playerBounds.right - platformBounds.left;
+            const overlapRight = platformBounds.right - playerBounds.left;
+            const overlapTop = playerBounds.bottom - platformBounds.top;
+            const overlapBottom = platformBounds.bottom - playerBounds.top;
+            
+            const minOverlapX = Math.min(overlapLeft, overlapRight);
+            const minOverlapY = Math.min(overlapTop, overlapBottom);
+            
+            // Only apply horizontal collision if not landing from above
+            if (minOverlapX < minOverlapY && overlapTop > 10) {
+              // Push horizontally
+              if (overlapLeft < overlapRight) {
+                this.player.x = platformBounds.left - this.player.width;
+              } else {
+                this.player.x = platformBounds.right;
+              }
+              this.player.dx = 0;
+            } else if (this.player.dy < 0 && overlapBottom < 15) {
+              // Bonk head on solid platform from below
+              this.player.y = platformBounds.bottom;
+              this.player.dy = 0;
+            }
+          }
+        }
+      });
+      
+      // Player vs Slopes
+      this.slopes.forEach(slope => {
+        if (slope.active) {
+          const playerCenterX = this.player.x + this.player.width / 2;
+          const playerBottom = this.player.y + this.player.height;
+          
+          const slopeY = slope.getYAtX(playerCenterX);
+          
+          if (slopeY !== null && playerBottom >= slopeY - 5 && playerBottom <= slopeY + 10) {
+            // Player is on the slope
+            this.player.y = slopeY - this.player.height;
+            this.player.dy = 0;
+            this.player.onGround = true;
+          }
+        }
+      });
+    }
+    
     // Player vs Pickups
     this.pickups.forEach(pickup => {
-      if (pickup.active && this.player.collidesWith(pickup)) {
-        // Track weapon pickups
+      if (pickup.active && this.player && this.player.active && this.player.collidesWith(pickup)) {
+        // Handle weapon pickups with swap popup
         if (pickup.pickupType && pickup.pickupType.startsWith('weapon_')) {
-          this.weaponsCollected++;
+          // Check if player already has 4 weapons (max capacity)
+          if (this.player.weapons.length >= 4) {
+            // Show weapon swap popup
+            this.weaponSwapPopup = {
+              weapon: pickup.weapon,
+              pickup: pickup,
+              pickupType: pickup.pickupType
+            };
+            this.state = 'weaponswap';
+            return; // Don't apply pickup yet
+          } else {
+            // Auto-add if not at max capacity
+            this.weaponsCollected++;
+            pickup.apply(this.player);
+            this.score += 50;
+          }
+        } else {
+          // Non-weapon pickups apply immediately
+          pickup.apply(this.player);
+          this.score += 50;
         }
-        pickup.apply(this.player);
-        this.score += 50;
       }
     });
     
@@ -759,7 +1175,7 @@ class GameEngine {
       // Player projectiles hitting enemies
       if (proj.owner instanceof Weapon && proj.owner === this.player.getCurrentWeapon()) {
         this.enemies.forEach(enemy => {
-          if (enemy.active && proj.collidesWith(enemy)) {
+          if (enemy.active && proj.active && proj.collidesWith(enemy)) {
             const killed = enemy.takeDamage(proj.damage);
             proj.destroy();
             
@@ -913,6 +1329,29 @@ class GameEngine {
       return;
     }
     
+    if (this.state === 'weaponswap' || this.state === 'weaponswapselect') {
+      // Draw game in background
+      this.renderGame();
+      
+      // Draw HUD
+      this.ui.drawHUD(this.ctx, this.player, {
+        score: this.score,
+        kills: this.kills,
+        wave: this.wave,
+        enemiesRemaining: this.enemiesRemaining,
+        mode: this.mode,
+        combo: this.combo
+      });
+      
+      // Draw weapon swap popup
+      if (this.state === 'weaponswap') {
+        this.ui.drawWeaponSwapPopup(this.ctx, this.weaponSwapPopup, this.player);
+      } else if (this.state === 'weaponswapselect') {
+        this.ui.drawWeaponSwapSelect(this.ctx, this.weaponSwapPopup, this.player);
+      }
+      return;
+    }
+    
     if (this.state === 'playing') {
       this.renderGame();
       
@@ -947,6 +1386,12 @@ class GameEngine {
     
     // Layer 4: Ground with detailed tiles
     this.draw16BitGround();
+    
+    // Draw slopes first (part of terrain)
+    this.slopes.forEach(s => s.render(this.ctx));
+    
+    // Draw platforms
+    this.platforms.forEach(p => p.render(this.ctx));
     
     // Draw cover objects (now as entities)
     this.covers.forEach(c => c.render(this.ctx));

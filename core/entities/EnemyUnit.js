@@ -330,12 +330,12 @@ class EnemyUnit extends Entity {
         armorColor = '#6b3a10';
         break;
       case 'boss':
-        bodyColor = '#7a2a2a'; // Dark red
-        bodyLight = '#8a3a3a';
-        bodyDark = '#6a1a1a';
-        helmetColor = '#5a0a0a';
-        helmetLight = '#6a1a1a';
-        armorColor = '#4a0000';
+        bodyColor = '#8a0a0a'; // Blood red
+        bodyLight = '#aa2a2a';
+        bodyDark = '#5a0000';
+        helmetColor = '#3a0000';
+        helmetLight = '#5a0a0a';
+        armorColor = '#2a0000';
         break;
       default:
         bodyColor = '#8b5a2a';
@@ -346,9 +346,24 @@ class EnemyUnit extends Entity {
         armorColor = '#5b2a00';
     }
     
-    // Scale for boss
-    const scale = this.enemyType === 'boss' ? 1.4 : 1.0;
-    const offsetY = this.enemyType === 'boss' ? -10 : 0;
+    // Scale for boss - make them more imposing
+    const scale = this.enemyType === 'boss' ? 1.6 : 1.0;
+    const offsetY = this.enemyType === 'boss' ? -15 : 0;
+    
+    // Boss intimidation aura
+    if (this.enemyType === 'boss') {
+      const pulseIntensity = this.isFinalBoss ? 0.4 : 0.3;
+      ctx.globalAlpha = pulseIntensity + Math.sin(Date.now() / 200) * 0.15;
+      ctx.fillStyle = this.isFinalBoss ? '#ff00ff' : '#ff0000'; // Purple for final boss
+      ctx.fillRect(this.x - 10, this.y - 10, this.width + 20, this.height + 20);
+      
+      // Extra intimidation for final boss
+      if (this.isFinalBoss) {
+        ctx.fillStyle = '#ff0000';
+        ctx.fillRect(this.x - 15, this.y - 15, this.width + 30, this.height + 30);
+      }
+      ctx.globalAlpha = 1;
+    }
     
     // === 16-BIT ENEMY SPRITE ===
     
@@ -391,6 +406,31 @@ class EnemyUnit extends Entity {
     ctx.fillRect(this.x + 10, this.y + 22 + offsetY, bodyWidth - 4, Math.floor(8 * scale));
     if (this.enemyType === 'heavy' || this.enemyType === 'boss') {
       ctx.fillRect(this.x + 12, this.y + 32 + offsetY, bodyWidth - 8, Math.floor(6 * scale));
+    }
+    
+    // Boss-specific menacing armor spikes
+    if (this.enemyType === 'boss') {
+      ctx.fillStyle = '#aa0000';
+      // Shoulder spikes
+      for (let i = 0; i < 3; i++) {
+        const spikeX = this.x + 8 + i * 6;
+        const spikeY = this.y + 20 + offsetY;
+        ctx.fillRect(spikeX, spikeY - 6, 4, 6);
+        ctx.fillRect(spikeX + 1, spikeY - 8, 2, 2);
+      }
+      for (let i = 0; i < 3; i++) {
+        const spikeX = this.x + this.width - 20 + i * 6;
+        const spikeY = this.y + 20 + offsetY;
+        ctx.fillRect(spikeX, spikeY - 6, 4, 6);
+        ctx.fillRect(spikeX + 1, spikeY - 8, 2, 2);
+      }
+      
+      // Chest emblem (skull-like)
+      ctx.fillStyle = '#ff0000';
+      ctx.fillRect(this.x + bodyWidth / 2 - 4, this.y + 28 + offsetY, 8, 6);
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(this.x + bodyWidth / 2 - 2, this.y + 29 + offsetY, 2, 2);
+      ctx.fillRect(this.x + bodyWidth / 2 + 2, this.y + 29 + offsetY, 2, 2);
     }
     
     // Belt/waist detail

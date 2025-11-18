@@ -262,10 +262,72 @@ class Pickup extends Entity {
       ctx.fillStyle = this.color;
       ctx.fillRect(this.x + this.width / 2 - 2, this.y + yOffset + 8, 4, 4);
     } else if (this.pickupType.startsWith('weapon')) {
-      // Draw weapon icon (16-bit gun)
+      // Draw detailed weapon icon based on type
       ctx.fillStyle = '#000000';
-      ctx.fillRect(this.x + 6, this.y + yOffset + 9, 8, 3);
-      ctx.fillRect(this.x + 11, this.y + yOffset + 8, 3, 5);
+      
+      // Different weapon visual styles
+      if (this.pickupType === 'weapon_rifle') {
+        // Rifle - longer barrel
+        ctx.fillRect(this.x + 4, this.y + yOffset + 9, 12, 3);
+        ctx.fillRect(this.x + 4, this.y + yOffset + 8, 4, 5);
+      } else if (this.pickupType === 'weapon_shotgun') {
+        // Shotgun - thick barrel
+        ctx.fillRect(this.x + 5, this.y + yOffset + 8, 10, 5);
+        ctx.fillRect(this.x + 5, this.y + yOffset + 9, 4, 3);
+      } else if (this.pickupType === 'weapon_machinegun') {
+        // Machine gun - very long with magazine
+        ctx.fillRect(this.x + 3, this.y + yOffset + 9, 14, 2);
+        ctx.fillRect(this.x + 3, this.y + yOffset + 8, 4, 5);
+        ctx.fillRect(this.x + 5, this.y + yOffset + 11, 3, 4);
+      } else if (this.pickupType === 'weapon_sniper') {
+        // Sniper - long with scope
+        ctx.fillRect(this.x + 2, this.y + yOffset + 10, 16, 2);
+        ctx.fillRect(this.x + 2, this.y + yOffset + 9, 4, 4);
+        ctx.fillRect(this.x + 7, this.y + yOffset + 8, 4, 2);
+      } else if (this.pickupType === 'weapon_grenade') {
+        // Grenade launcher - chunky
+        ctx.fillRect(this.x + 4, this.y + yOffset + 8, 10, 6);
+        ctx.fillRect(this.x + 12, this.y + yOffset + 9, 3, 4);
+        ctx.fillStyle = '#666666';
+        ctx.fillRect(this.x + 7, this.y + yOffset + 10, 4, 3);
+      } else if (this.pickupType === 'weapon_laser') {
+        // Laser gun - futuristic
+        ctx.fillStyle = '#00ffff';
+        ctx.fillRect(this.x + 4, this.y + yOffset + 9, 12, 3);
+        ctx.fillRect(this.x + 4, this.y + yOffset + 8, 5, 5);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(this.x + 14, this.y + yOffset + 10, 2, 1);
+      } else {
+        // Default weapon icon
+        ctx.fillRect(this.x + 6, this.y + yOffset + 9, 8, 3);
+        ctx.fillRect(this.x + 11, this.y + yOffset + 8, 3, 5);
+      }
+      
+      // Draw weapon name label above pickup
+      ctx.globalAlpha = 0.9;
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(this.x - 20, this.y + yOffset - 20, 60, 16);
+      ctx.fillStyle = this.color;
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(this.x - 20, this.y + yOffset - 20, 60, 16);
+      
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 10px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      
+      let weaponLabel = '';
+      if (this.weapon) {
+        weaponLabel = this.weapon.name.toUpperCase();
+        if (weaponLabel.length > 9) {
+          weaponLabel = weaponLabel.substring(0, 8) + '.';
+        }
+      }
+      ctx.fillText(weaponLabel, this.x + this.width / 2, this.y + yOffset - 12);
+      ctx.globalAlpha = 1;
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'alphabetic';
     } else if (this.pickupType.startsWith('powerup')) {
       // Draw star/power icon
       ctx.fillStyle = '#ffffff';
