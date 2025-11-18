@@ -935,30 +935,18 @@ class GameEngine {
     // Apply camera transform
     this.camera.apply(this.ctx);
     
-    // Draw sky with gradient (retro military theme)
-    const skyGradient = this.ctx.createLinearGradient(0, 0, 0, this.groundLevel);
-    skyGradient.addColorStop(0, '#4a5568'); // Dark gray-blue
-    skyGradient.addColorStop(1, '#6b7280'); // Lighter gray
-    this.ctx.fillStyle = skyGradient;
-    this.ctx.fillRect(0, 0, this.worldWidth, this.groundLevel);
+    // === 16-BIT ARCADE BACKGROUND ===
+    // Layer 1: Sky with 16-bit dithered gradient
+    this.draw16BitSky();
     
-    // Draw distant mountains/buildings (parallax background)
-    this.ctx.fillStyle = '#2d3748';
-    for (let i = 0; i < this.worldWidth; i += 300) {
-      const height = 100 + Math.sin(i * 0.01) * 50;
-      this.ctx.fillRect(i, this.groundLevel - height, 250, height);
-    }
+    // Layer 2: Distant mountains (parallax far)
+    this.draw16BitMountains();
     
-    // Draw ground (military bunker style)
-    this.ctx.fillStyle = '#4a4a3a';
-    this.ctx.fillRect(0, this.groundLevel, this.worldWidth, this.worldHeight - this.groundLevel);
+    // Layer 3: Middle buildings/structures (parallax mid)
+    this.draw16BitBuildings();
     
-    // Draw grass/debris on top of ground (retro style)
-    this.ctx.fillStyle = '#5a5a4a';
-    for (let i = 0; i < this.worldWidth; i += 20) {
-      const height = 3 + Math.floor(Math.random() * 3);
-      this.ctx.fillRect(i, this.groundLevel - height, 15, height);
-    }
+    // Layer 4: Ground with detailed tiles
+    this.draw16BitGround();
     
     // Draw cover objects (now as entities)
     this.covers.forEach(c => c.render(this.ctx));
@@ -982,6 +970,192 @@ class GameEngine {
     
     // Reset camera transform
     this.camera.reset(this.ctx);
+  }
+  
+  // 16-bit arcade style sky with dithered gradient
+  draw16BitSky() {
+    // Base sky colors - classic 16-bit palette
+    const skyTop = '#4a5f7f';
+    const skyMid = '#6a7f9f';
+    const skyBottom = '#8a9fbf';
+    
+    // Draw gradient bands
+    const bandHeight = Math.floor(this.groundLevel / 3);
+    this.ctx.fillStyle = skyTop;
+    this.ctx.fillRect(0, 0, this.worldWidth, bandHeight);
+    this.ctx.fillStyle = skyMid;
+    this.ctx.fillRect(0, bandHeight, this.worldWidth, bandHeight);
+    this.ctx.fillStyle = skyBottom;
+    this.ctx.fillRect(0, bandHeight * 2, this.worldWidth, this.groundLevel - bandHeight * 2);
+    
+    // Add dithering pattern between bands for 16-bit feel
+    this.ctx.fillStyle = skyMid;
+    for (let x = 0; x < this.worldWidth; x += 4) {
+      for (let y = bandHeight - 8; y < bandHeight + 8; y += 4) {
+        if ((x + y) % 8 === 0) {
+          this.ctx.fillRect(x, y, 2, 2);
+        }
+      }
+    }
+    this.ctx.fillStyle = skyBottom;
+    for (let x = 0; x < this.worldWidth; x += 4) {
+      for (let y = bandHeight * 2 - 8; y < bandHeight * 2 + 8; y += 4) {
+        if ((x + y) % 8 === 0) {
+          this.ctx.fillRect(x, y, 2, 2);
+        }
+      }
+    }
+    
+    // Add clouds (16-bit pixel style)
+    const cameraOffset = this.camera.x * 0.1; // Slow parallax
+    this.ctx.fillStyle = '#9fb0cf';
+    for (let i = 0; i < 8; i++) {
+      const cloudX = (i * 400 - cameraOffset) % this.worldWidth;
+      const cloudY = 50 + (i % 3) * 40;
+      // Pixelated cloud shape
+      this.ctx.fillRect(cloudX, cloudY, 48, 8);
+      this.ctx.fillRect(cloudX + 8, cloudY - 8, 32, 8);
+      this.ctx.fillRect(cloudX + 16, cloudY - 16, 16, 8);
+      this.ctx.fillRect(cloudX - 8, cloudY + 8, 64, 8);
+    }
+  }
+  
+  // 16-bit arcade style distant mountains
+  draw16BitMountains() {
+    const cameraOffset = this.camera.x * 0.15; // Parallax effect
+    
+    // Mountain colors - darker for distance
+    const mountainDark = '#2d3d4d';
+    const mountainMid = '#3d4d5d';
+    const mountainLight = '#4d5d6d';
+    
+    // Draw multiple mountain layers
+    for (let layer = 0; layer < 2; layer++) {
+      const baseY = this.groundLevel - 80 - layer * 20;
+      const color = layer === 0 ? mountainDark : mountainMid;
+      this.ctx.fillStyle = color;
+      
+      for (let i = 0; i < this.worldWidth / 200; i++) {
+        const x = (i * 200 - cameraOffset * (1 + layer * 0.5)) % this.worldWidth;
+        const peakHeight = 60 + Math.sin(i * 1.5) * 20;
+        
+        // Draw pixelated mountain peak
+        for (let h = 0; h < peakHeight; h += 4) {
+          const width = (peakHeight - h) * 1.5;
+          this.ctx.fillRect(x - width / 2, baseY - h, width, 4);
+        }
+        
+        // Add highlights on peaks
+        if (layer === 1) {
+          this.ctx.fillStyle = mountainLight;
+          for (let h = peakHeight - 12; h < peakHeight; h += 4) {
+            const width = (peakHeight - h) * 0.7;
+            this.ctx.fillRect(x - width / 2, baseY - h, Math.max(4, width / 2), 4);
+          }
+          this.ctx.fillStyle = color;
+        }
+      }
+    }
+  }
+  
+  // 16-bit arcade style buildings/structures
+  draw16BitBuildings() {
+    const cameraOffset = this.camera.x * 0.3; // Mid-range parallax
+    
+    // Building colors
+    const buildingBase = '#3a4a3a';
+    const buildingDark = '#2a3a2a';
+    const buildingWindow = '#5a6a5a';
+    const buildingLight = '#4a5a4a';
+    
+    this.ctx.fillStyle = buildingBase;
+    
+    for (let i = 0; i < this.worldWidth / 150; i++) {
+      const x = (i * 150 - cameraOffset) % this.worldWidth;
+      const baseY = this.groundLevel - 40;
+      const buildingHeight = 80 + (i % 4) * 20;
+      const buildingWidth = 60 + (i % 3) * 20;
+      
+      // Main building structure
+      this.ctx.fillStyle = buildingBase;
+      this.ctx.fillRect(x, baseY - buildingHeight, buildingWidth, buildingHeight);
+      
+      // Building shadow/depth
+      this.ctx.fillStyle = buildingDark;
+      this.ctx.fillRect(x + buildingWidth - 8, baseY - buildingHeight, 8, buildingHeight);
+      
+      // Windows (16-bit style grid)
+      this.ctx.fillStyle = buildingWindow;
+      for (let wy = 0; wy < buildingHeight - 20; wy += 16) {
+        for (let wx = 8; wx < buildingWidth - 16; wx += 12) {
+          this.ctx.fillRect(x + wx, baseY - buildingHeight + wy + 10, 6, 8);
+        }
+      }
+      
+      // Building top detail
+      this.ctx.fillStyle = buildingLight;
+      this.ctx.fillRect(x, baseY - buildingHeight, buildingWidth, 4);
+    }
+  }
+  
+  // 16-bit arcade style ground with detailed tiles
+  draw16BitGround() {
+    const groundBase = '#4a4a3a';
+    const groundDark = '#3a3a2a';
+    const groundLight = '#5a5a4a';
+    const grassGreen = '#4a5a3a';
+    const grassDark = '#3a4a2a';
+    
+    // Base ground
+    this.ctx.fillStyle = groundBase;
+    this.ctx.fillRect(0, this.groundLevel, this.worldWidth, this.worldHeight - this.groundLevel);
+    
+    // Ground tile pattern (16-bit style)
+    this.ctx.fillStyle = groundDark;
+    for (let x = 0; x < this.worldWidth; x += 32) {
+      for (let y = this.groundLevel + 8; y < this.worldHeight; y += 16) {
+        // Create brick/tile pattern
+        const offset = (Math.floor(y / 16) % 2) * 16;
+        this.ctx.fillRect(x + offset, y, 28, 2);
+        this.ctx.fillRect(x + offset, y, 2, 14);
+      }
+    }
+    
+    // Ground highlights
+    this.ctx.fillStyle = groundLight;
+    for (let x = 0; x < this.worldWidth; x += 32) {
+      for (let y = this.groundLevel + 8; y < this.worldHeight; y += 16) {
+        const offset = (Math.floor(y / 16) % 2) * 16;
+        if ((x + y) % 64 === 0) {
+          this.ctx.fillRect(x + offset + 2, y + 2, 4, 4);
+        }
+      }
+    }
+    
+    // Top ground detail line
+    this.ctx.fillStyle = groundLight;
+    this.ctx.fillRect(0, this.groundLevel, this.worldWidth, 2);
+    
+    // Grass/vegetation on ground edge (pixel style)
+    for (let x = 0; x < this.worldWidth; x += 8) {
+      const grassHeight = 4 + (Math.sin(x * 0.1) * 2);
+      const useGrass = Math.sin(x * 0.3) > -0.5;
+      
+      if (useGrass) {
+        this.ctx.fillStyle = grassGreen;
+        // Grass blade
+        this.ctx.fillRect(x, this.groundLevel - grassHeight, 3, grassHeight);
+        this.ctx.fillRect(x + 1, this.groundLevel - grassHeight - 2, 1, 2);
+        
+        // Grass shadow
+        this.ctx.fillStyle = grassDark;
+        this.ctx.fillRect(x + 2, this.groundLevel - grassHeight, 1, grassHeight);
+      } else {
+        // Small rocks/debris
+        this.ctx.fillStyle = groundDark;
+        this.ctx.fillRect(x, this.groundLevel - 2, 4, 2);
+      }
+    }
   }
 
   gameLoop(timestamp) {

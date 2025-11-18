@@ -28,37 +28,96 @@ class Projectile extends Entity {
   }
 
   render(ctx) {
-    // Different visuals based on projectile type
+    // === 16-BIT ARCADE PROJECTILE STYLES ===
+    
     if (this.color === '#00ffff') {
-      // Laser projectile
+      // LASER PROJECTILE (16-bit sci-fi style)
+      // Outer glow
+      ctx.globalAlpha = 0.4;
       ctx.fillStyle = this.color;
-      ctx.fillRect(this.x, this.y, this.width, this.height);
-      ctx.globalAlpha = 0.5;
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(this.x + 2, this.y, this.width - 4, this.height);
+      ctx.fillRect(this.x - 2, this.y - 2, this.width + 4, this.height + 4);
+      
+      // Main beam
       ctx.globalAlpha = 1;
-    } else if (this.color === '#ffaa00') {
-      // Grenade projectile
       ctx.fillStyle = this.color;
-      ctx.beginPath();
-      ctx.arc(this.x + this.width / 2, this.y + this.height / 2, this.width / 2, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = '#aa6600';
-      ctx.lineWidth = 2;
-      ctx.stroke();
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+      
+      // Inner bright core
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x + 2, this.y + 1, this.width - 4, this.height - 2);
+      
+      // Beam segments (16-bit animation effect)
+      ctx.fillStyle = '#00cccc';
+      for (let i = 0; i < this.width; i += 4) {
+        ctx.fillRect(this.x + i, this.y, 2, this.height);
+      }
+      
+    } else if (this.color === '#ffaa00') {
+      // GRENADE PROJECTILE (16-bit explosive)
+      // Shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(this.x + 1, this.y + this.height / 2 + 1, this.width, this.height / 2);
+      
+      // Main grenade body
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x, this.y, this.width, this.height);
+      
+      // Highlights (16-bit shading)
+      ctx.fillStyle = '#ffcc44';
+      ctx.fillRect(this.x, this.y, this.width / 2, this.height / 2);
+      
+      // Dark band
+      ctx.fillStyle = '#aa7700';
+      ctx.fillRect(this.x, this.y + this.height / 2 - 1, this.width, 2);
+      
+      // Pin/fuse detail
+      ctx.fillStyle = '#666666';
+      ctx.fillRect(this.x + this.width / 2 - 1, this.y - 2, 2, 3);
+      
+      // Outline
+      ctx.strokeStyle = '#000000';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(this.x, this.y, this.width, this.height);
+      
     } else {
-      // Regular projectile - Retro military style
+      // REGULAR BULLET (16-bit military style)
+      
+      // Muzzle flash trail (16-bit glow)
+      ctx.globalAlpha = 0.4;
+      ctx.fillStyle = this.color || '#ffff00';
+      ctx.fillRect(this.x - 6, this.y - 2, 6, this.height + 4);
+      
+      // Trail segments
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#ffaa00';
+      ctx.fillRect(this.x - 4, this.y - 1, 4, this.height + 2);
+      
+      // Main bullet body
+      ctx.globalAlpha = 1;
       ctx.fillStyle = this.color || '#ffff00';
       ctx.fillRect(this.x, this.y, this.width, this.height);
       
-      // Add tracer effect
-      ctx.fillStyle = '#ffaa00';
-      ctx.fillRect(this.x - 2, this.y, 2, this.height);
+      // Bullet highlight (16-bit shading)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x, this.y, this.width / 2, 1);
+      ctx.fillRect(this.x, this.y, 1, this.height / 2);
       
-      // Add muzzle flash glow
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = this.color || '#ffff00';
-      ctx.fillRect(this.x - 4, this.y - 2, this.width + 4, this.height + 4);
+      // Bullet shadow
+      ctx.fillStyle = '#aa8800';
+      ctx.fillRect(this.x + this.width / 2, this.y + this.height - 1, this.width / 2, 1);
+      ctx.fillRect(this.x + this.width - 1, this.y + this.height / 2, 1, this.height / 2);
+      
+      // Bullet tip (pointed)
+      ctx.fillStyle = '#cccc00';
+      ctx.fillRect(this.x + this.width, this.y + 1, 2, this.height - 2);
+      
+      // Tracer streak (16-bit pixel trail)
+      ctx.globalAlpha = 0.6;
+      ctx.fillStyle = '#ff8800';
+      for (let i = 0; i < 3; i++) {
+        ctx.fillRect(this.x - 8 - i * 2, this.y + 1, 2, this.height - 2);
+      }
+      
       ctx.globalAlpha = 1;
     }
   }

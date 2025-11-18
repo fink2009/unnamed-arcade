@@ -290,74 +290,178 @@ class EnemyUnit extends Entity {
   }
 
   render(ctx) {
-    // Draw shadow
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-    ctx.fillRect(this.x, this.y + this.height, this.width, 5);
+    // Draw shadow (16-bit style)
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+    ctx.fillRect(this.x + 2, this.y + this.height, this.width - 4, 4);
     
-    // Enemy military colors based on type (different from player)
-    let bodyColor, armorColor;
+    // 16-bit arcade enemy colors based on type
+    let bodyColor, bodyLight, bodyDark, helmetColor, helmetLight, armorColor;
     switch (this.enemyType) {
       case 'infantry':
-        bodyColor = '#8b4513'; // Brown
-        armorColor = '#6b3510';
+        bodyColor = '#8b5a2a'; // Brown
+        bodyLight = '#9b6a3a';
+        bodyDark = '#7b4a1a';
+        helmetColor = '#6b3a10';
+        helmetLight = '#7b4a20';
+        armorColor = '#5b2a00';
         break;
       case 'heavy':
-        bodyColor = '#4a4a4a'; // Dark gray
-        armorColor = '#3a3a3a';
+        bodyColor = '#5a5a5a'; // Dark gray
+        bodyLight = '#6a6a6a';
+        bodyDark = '#4a4a4a';
+        helmetColor = '#3a3a3a';
+        helmetLight = '#4a4a4a';
+        armorColor = '#2a2a2a';
         break;
       case 'sniper':
-        bodyColor = '#2d4a2d'; // Dark green
+        bodyColor = '#3d5a3d'; // Dark green
+        bodyLight = '#4d6a4d';
+        bodyDark = '#2d4a2d';
+        helmetColor = '#2d4a2d';
+        helmetLight = '#3d5a3d';
         armorColor = '#1d3a1d';
         break;
       case 'scout':
-        bodyColor = '#9b5513'; // Light brown
-        armorColor = '#7b4510';
+        bodyColor = '#9b6a3a'; // Light brown
+        bodyLight = '#ab7a4a';
+        bodyDark = '#8b5a2a';
+        helmetColor = '#7b4a20';
+        helmetLight = '#8b5a30';
+        armorColor = '#6b3a10';
+        break;
+      case 'boss':
+        bodyColor = '#7a2a2a'; // Dark red
+        bodyLight = '#8a3a3a';
+        bodyDark = '#6a1a1a';
+        helmetColor = '#5a0a0a';
+        helmetLight = '#6a1a1a';
+        armorColor = '#4a0000';
         break;
       default:
-        bodyColor = '#8b4513';
-        armorColor = '#6b3510';
+        bodyColor = '#8b5a2a';
+        bodyLight = '#9b6a3a';
+        bodyDark = '#7b4a1a';
+        helmetColor = '#6b3a10';
+        helmetLight = '#7b4a20';
+        armorColor = '#5b2a00';
     }
     
-    // Draw enemy body (retro style)
+    // Scale for boss
+    const scale = this.enemyType === 'boss' ? 1.4 : 1.0;
+    const offsetY = this.enemyType === 'boss' ? -10 : 0;
+    
+    // === 16-BIT ENEMY SPRITE ===
+    
+    // Main body
     ctx.fillStyle = bodyColor;
-    ctx.fillRect(this.x, this.y, this.width, this.height);
+    const bodyWidth = Math.floor((this.width - 16) * scale);
+    const bodyHeight = Math.floor((this.height - 28) * scale);
+    ctx.fillRect(this.x + 8, this.y + 18 + offsetY, bodyWidth, bodyHeight);
     
-    // Draw helmet/head
+    // Body shadows (16-bit shading)
+    ctx.fillStyle = bodyDark;
+    ctx.fillRect(this.x + 8, this.y + 18 + offsetY, 4, bodyHeight);
+    ctx.fillRect(this.x + 8, this.y + bodyHeight + 14 + offsetY, bodyWidth, 4);
+    
+    // Body highlights
+    ctx.fillStyle = bodyLight;
+    ctx.fillRect(this.x + bodyWidth + 4, this.y + 18 + offsetY, 4, bodyHeight);
+    ctx.fillRect(this.x + 8, this.y + 18 + offsetY, bodyWidth, 4);
+    
+    // Helmet/Head (16-bit detailed)
+    const headWidth = Math.floor((this.width - 12) * scale);
+    ctx.fillStyle = helmetColor;
+    ctx.fillRect(this.x + 6, this.y + 4 + offsetY, headWidth, Math.floor(16 * scale));
+    
+    // Helmet shadow
+    ctx.fillStyle = bodyDark;
+    ctx.fillRect(this.x + 6, this.y + 4 + offsetY, 4, Math.floor(16 * scale));
+    
+    // Visor/Face (16-bit menacing style)
+    ctx.fillStyle = '#2a1a1a';
+    ctx.fillRect(this.x + 10, this.y + 10 + offsetY, headWidth - 8, 6);
+    
+    // Visor glow (enemy red eyes)
+    ctx.fillStyle = '#ff0000';
+    ctx.fillRect(this.x + 12, this.y + 12 + offsetY, 3, 2);
+    ctx.fillRect(this.x + headWidth - 8, this.y + 12 + offsetY, 3, 2);
+    
+    // Armor plates/chest detail
     ctx.fillStyle = armorColor;
-    ctx.fillRect(this.x + 5, this.y + 5, this.width - 10, 15);
+    ctx.fillRect(this.x + 10, this.y + 22 + offsetY, bodyWidth - 4, Math.floor(8 * scale));
+    if (this.enemyType === 'heavy' || this.enemyType === 'boss') {
+      ctx.fillRect(this.x + 12, this.y + 32 + offsetY, bodyWidth - 8, Math.floor(6 * scale));
+    }
     
-    // Draw armor plates
-    ctx.fillStyle = armorColor;
-    ctx.fillRect(this.x + 3, this.y + 22, this.width - 6, 8);
+    // Belt/waist detail
+    ctx.fillStyle = '#1a1a0a';
+    ctx.fillRect(this.x + 10, this.y + Math.floor(38 * scale) + offsetY, bodyWidth - 4, 3);
     
-    // Draw weapon (more prominent)
-    ctx.fillStyle = '#1a1a1a';
+    // Legs (16-bit pixel style)
+    const legWidth = Math.floor(7 * scale);
+    
+    // Left leg
+    ctx.fillStyle = bodyDark;
+    ctx.fillRect(this.x + 8, this.y + this.height - 12, legWidth, 12);
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(this.x + 8, this.y + this.height - 12, legWidth - 2, 12);
+    
+    // Right leg
+    ctx.fillStyle = bodyDark;
+    ctx.fillRect(this.x + this.width - 8 - legWidth, this.y + this.height - 12, legWidth, 12);
+    ctx.fillStyle = bodyColor;
+    ctx.fillRect(this.x + this.width - 8 - legWidth, this.y + this.height - 12, legWidth - 2, 12);
+    
+    // Boots
+    ctx.fillStyle = '#0a0a0a';
+    ctx.fillRect(this.x + 7, this.y + this.height - 5, legWidth + 1, 5);
+    ctx.fillRect(this.x + this.width - 8 - legWidth, this.y + this.height - 5, legWidth + 1, 5);
+    
+    // === WEAPON (16-bit enemy weapon) ===
     const weaponX = this.x + this.width / 2 + (this.facing * 10);
     const weaponY = this.y + this.height / 2;
-    ctx.fillRect(weaponX, weaponY - 3, 12 * this.facing, 6);
     
-    // Weapon detail
+    // Weapon body
+    ctx.fillStyle = '#2a2a2a';
+    ctx.fillRect(weaponX, weaponY - 3, 14 * this.facing, 6);
+    
+    // Weapon highlights
+    ctx.fillStyle = '#1a1a1a';
+    ctx.fillRect(weaponX, weaponY - 3, 14 * this.facing, 2);
+    
+    // Weapon barrel
     ctx.fillStyle = '#0a0a0a';
-    ctx.fillRect(weaponX + (8 * this.facing), weaponY - 1, 4 * this.facing, 2);
+    ctx.fillRect(weaponX + (10 * this.facing), weaponY - 2, 4 * this.facing, 4);
     
-    // Draw health bar (enemy style)
+    // Character outline for visibility (16-bit style)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x + 6, this.y + 4 + offsetY, this.width - 12, this.height - 4);
+    
+    // === HEALTH BAR (16-bit arcade style) ===
     const barWidth = this.width;
-    const barHeight = 3;
+    const barHeight = 4;
     const healthPercent = this.health / this.maxHealth;
     
+    // Health bar background
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(this.x - 1, this.y - 10, barWidth + 2, barHeight + 2);
+    
+    // Health bar empty
     ctx.fillStyle = '#660000';
-    ctx.fillRect(this.x, this.y - 8, barWidth, barHeight);
+    ctx.fillRect(this.x, this.y - 9, barWidth, barHeight);
+    
+    // Health bar fill (enemy red theme)
     ctx.fillStyle = '#ff3333';
-    ctx.fillRect(this.x, this.y - 8, barWidth * healthPercent, barHeight);
+    ctx.fillRect(this.x, this.y - 9, barWidth * healthPercent, barHeight);
     
-    // Health bar border
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1;
-    ctx.strokeRect(this.x, this.y - 8, barWidth, barHeight);
+    // Health bar highlight
+    ctx.fillStyle = 'rgba(255, 100, 100, 0.4)';
+    ctx.fillRect(this.x, this.y - 9, barWidth * healthPercent, 1);
     
-    // Draw AI state indicator (debug) - retro style
+    // Draw AI state indicator (16-bit retro style)
     ctx.fillStyle = '#ffff00';
     ctx.font = '8px monospace';
-    ctx.fillText(this.aiState.substring(0, 3).toUpperCase(), this.x, this.y - 12);
+    ctx.fillText(this.aiState.substring(0, 3).toUpperCase(), this.x, this.y - 13);
   }
 }

@@ -183,34 +183,114 @@ class Pickup extends Entity {
   render(ctx) {
     const yOffset = Math.sin(this.bobOffset) * 5;
     
-    // Draw glow
-    ctx.globalAlpha = 0.3;
-    ctx.fillStyle = this.color;
-    ctx.fillRect(this.x - 5, this.y + yOffset - 5, this.width + 10, this.height + 10);
+    // === 16-BIT ARCADE PICKUP STYLE ===
     
-    // Draw pickup
+    // Draw outer glow (16-bit pulsing effect)
+    const pulseAlpha = 0.2 + Math.sin(this.bobOffset * 2) * 0.15;
+    ctx.globalAlpha = pulseAlpha;
+    ctx.fillStyle = this.color;
+    ctx.fillRect(this.x - 6, this.y + yOffset - 6, this.width + 12, this.height + 12);
+    
+    // Draw middle glow
+    ctx.globalAlpha = pulseAlpha * 1.5;
+    ctx.fillRect(this.x - 3, this.y + yOffset - 3, this.width + 6, this.height + 6);
+    
+    // Draw pickup base with 16-bit shading
     ctx.globalAlpha = 1;
+    
+    // Main body
     ctx.fillStyle = this.color;
     ctx.fillRect(this.x, this.y + yOffset, this.width, this.height);
     
-    // Draw icon/symbol
-    ctx.fillStyle = '#000';
-    ctx.font = '12px monospace';
+    // 16-bit highlight
+    const lighterColor = this.adjustColorBrightness(this.color, 40);
+    ctx.fillStyle = lighterColor;
+    ctx.fillRect(this.x, this.y + yOffset, this.width, 4);
+    ctx.fillRect(this.x, this.y + yOffset, 4, this.height);
+    
+    // 16-bit shadow
+    const darkerColor = this.adjustColorBrightness(this.color, -40);
+    ctx.fillStyle = darkerColor;
+    ctx.fillRect(this.x + this.width - 4, this.y + yOffset, 4, this.height);
+    ctx.fillRect(this.x, this.y + yOffset + this.height - 4, this.width, 4);
+    
+    // Border outline (16-bit style)
+    ctx.strokeStyle = '#000000';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x, this.y + yOffset, this.width, this.height);
+    
+    // Draw icon/symbol (16-bit pixel art style)
+    ctx.fillStyle = '#000000';
+    ctx.font = 'bold 14px monospace';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     
     let symbol = '?';
-    if (this.pickupType === 'health' || this.pickupType === 'healing') symbol = '+';
-    else if (this.pickupType === 'ammo') symbol = 'A';
-    else if (this.pickupType === 'damage_boost') symbol = 'D';
-    else if (this.pickupType === 'powerup_rapid_fire') symbol = 'R';
-    else if (this.pickupType === 'powerup_multi_shot') symbol = 'M';
-    else if (this.pickupType === 'powerup_shield') symbol = 'S';
-    else if (this.pickupType.startsWith('weapon')) symbol = 'W';
-    else if (this.pickupType.startsWith('powerup')) symbol = '*';
+    if (this.pickupType === 'health' || this.pickupType === 'healing') {
+      // Draw cross symbol (16-bit pixel style)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x + this.width / 2 - 1, this.y + yOffset + 5, 2, 10);
+      ctx.fillRect(this.x + this.width / 2 - 4, this.y + yOffset + 8, 8, 4);
+    } else if (this.pickupType === 'ammo') {
+      // Draw bullet icon (16-bit pixel style)
+      ctx.fillStyle = '#ffff00';
+      ctx.fillRect(this.x + this.width / 2 - 2, this.y + yOffset + 6, 4, 8);
+      ctx.fillStyle = '#ffaa00';
+      ctx.fillRect(this.x + this.width / 2 - 2, this.y + yOffset + 6, 4, 3);
+    } else if (this.pickupType === 'damage_boost') {
+      // Draw explosion icon (16-bit pixel style)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x + this.width / 2 - 3, this.y + yOffset + 8, 6, 4);
+      ctx.fillRect(this.x + this.width / 2 - 1, this.y + yOffset + 6, 2, 8);
+      ctx.fillRect(this.x + this.width / 2 - 5, this.y + yOffset + 10, 2, 2);
+      ctx.fillRect(this.x + this.width / 2 + 3, this.y + yOffset + 10, 2, 2);
+    } else if (this.pickupType === 'powerup_rapid_fire') {
+      // Draw rapid fire icon (multiple bullets)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x + 6, this.y + yOffset + 7, 2, 6);
+      ctx.fillRect(this.x + 9, this.y + yOffset + 7, 2, 6);
+      ctx.fillRect(this.x + 12, this.y + yOffset + 7, 2, 6);
+    } else if (this.pickupType === 'powerup_multi_shot') {
+      // Draw multi-directional arrows
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x + this.width / 2 - 1, this.y + yOffset + 6, 2, 8);
+      ctx.fillRect(this.x + this.width / 2 - 5, this.y + yOffset + 9, 10, 2);
+    } else if (this.pickupType === 'powerup_shield') {
+      // Draw shield icon (16-bit)
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(this.x + this.width / 2 - 4, this.y + yOffset + 6, 8, 8);
+      ctx.fillStyle = this.color;
+      ctx.fillRect(this.x + this.width / 2 - 2, this.y + yOffset + 8, 4, 4);
+    } else if (this.pickupType.startsWith('weapon')) {
+      // Draw weapon icon (16-bit gun)
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(this.x + 6, this.y + yOffset + 9, 8, 3);
+      ctx.fillRect(this.x + 11, this.y + yOffset + 8, 3, 5);
+    } else if (this.pickupType.startsWith('powerup')) {
+      // Draw star/power icon
+      ctx.fillStyle = '#ffffff';
+      const cx = this.x + this.width / 2;
+      const cy = this.y + yOffset + this.height / 2;
+      ctx.fillRect(cx - 1, cy - 4, 2, 8);
+      ctx.fillRect(cx - 4, cy - 1, 8, 2);
+      ctx.fillRect(cx - 3, cy - 3, 2, 2);
+      ctx.fillRect(cx + 1, cy - 3, 2, 2);
+      ctx.fillRect(cx - 3, cy + 1, 2, 2);
+      ctx.fillRect(cx + 1, cy + 1, 2, 2);
+    } else {
+      ctx.fillText(symbol, this.x + this.width / 2, this.y + yOffset + this.height / 2);
+    }
     
-    ctx.fillText(symbol, this.x + this.width / 2, this.y + yOffset + this.height / 2);
     ctx.textAlign = 'left';
     ctx.textBaseline = 'alphabetic';
+  }
+  
+  // Helper to adjust color brightness for 16-bit shading
+  adjustColorBrightness(color, amount) {
+    const hex = color.replace('#', '');
+    const r = Math.max(0, Math.min(255, parseInt(hex.substr(0, 2), 16) + amount));
+    const g = Math.max(0, Math.min(255, parseInt(hex.substr(2, 2), 16) + amount));
+    const b = Math.max(0, Math.min(255, parseInt(hex.substr(4, 2), 16) + amount));
+    return '#' + ((r << 16) | (g << 8) | b).toString(16).padStart(6, '0');
   }
 }
