@@ -266,7 +266,7 @@ class EnemyUnit extends Entity {
     return Math.sqrt(dx * dx + dy * dy);
   }
 
-  update(deltaTime, player, groundLevel, currentTime) {
+  update(deltaTime, player, groundLevel, currentTime, worldWidth = 3000) {
     const dt = deltaTime / 16;
     
     // Update weapon
@@ -277,6 +277,19 @@ class EnemyUnit extends Entity {
     
     // Apply movement
     this.x += this.dx * dt;
+    
+    // Keep enemy within world bounds
+    if (this.x < 0) {
+      this.x = 0;
+      this.dx = 0;
+      this.patrolDirection = 1;
+      this.facing = 1;
+    } else if (this.x + this.width > worldWidth) {
+      this.x = worldWidth - this.width;
+      this.dx = 0;
+      this.patrolDirection = -1;
+      this.facing = -1;
+    }
     
     // Apply gravity
     this.dy += this.gravity * dt;

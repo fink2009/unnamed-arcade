@@ -835,7 +835,11 @@ class GameEngine {
         // YES - Choose which weapon to swap
         this.state = 'weaponswapselect';
       } else if (this.inputManager.wasKeyPressed('n') || this.inputManager.wasKeyPressed('N') || this.inputManager.wasKeyPressed('2') || this.inputManager.wasKeyPressed('Escape')) {
-        // NO - Leave weapon on ground
+        // NO - Leave weapon on ground, mark pickup as ignored temporarily
+        if (this.weaponSwapPopup && this.weaponSwapPopup.pickup) {
+          // Mark pickup with a cooldown to prevent immediate re-trigger
+          this.weaponSwapPopup.pickup.ignoredUntil = performance.now() + 2000; // Ignore for 2 seconds
+        }
         this.weaponSwapPopup = null;
         this.state = 'playing';
       }
@@ -903,7 +907,7 @@ class GameEngine {
     
     // Update enemies
     this.enemies.forEach(enemy => {
-      enemy.update(deltaTime, this.player, this.groundLevel, this.currentTime);
+      enemy.update(deltaTime, this.player, this.groundLevel, this.currentTime, this.worldWidth);
       
       // Enemy shooting
       const result = enemy.attack(this.player, this.currentTime);
@@ -1142,6 +1146,11 @@ class GameEngine {
     // Player vs Pickups
     this.pickups.forEach(pickup => {
       if (pickup.active && this.player && this.player.active && this.player.collidesWith(pickup)) {
+        // Check if pickup is temporarily ignored (player said NO to weapon swap)
+        if (pickup.ignoredUntil && this.currentTime < pickup.ignoredUntil) {
+          return; // Skip this pickup temporarily
+        }
+        
         // Handle weapon pickups with swap popup
         if (pickup.pickupType && pickup.pickupType.startsWith('weapon_')) {
           // Check if player already has 4 weapons (max capacity)
