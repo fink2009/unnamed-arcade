@@ -272,6 +272,10 @@ class EnemyUnit extends Entity {
     // Update weapon
     this.weapon.update(currentTime);
     
+    // Ensure patrol bounds respect world boundaries
+    if (this.patrolMin < 0) this.patrolMin = 0;
+    if (this.patrolMax > worldWidth) this.patrolMax = worldWidth;
+    
     // AI decision making
     this.updateAI(player, currentTime, deltaTime);
     

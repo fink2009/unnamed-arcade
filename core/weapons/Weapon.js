@@ -31,6 +31,12 @@ class Weapon {
     const dx = targetX - x;
     const dy = targetY - y;
     const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    // Prevent division by zero - default to shooting right if target is at gun position
+    if (dist === 0) {
+      return new Projectile(x, y, this.projectileSpeed, 0, this.damage, this);
+    }
+    
     const vx = (dx / dist) * this.projectileSpeed;
     const vy = (dy / dist) * this.projectileSpeed;
 
@@ -126,8 +132,16 @@ class GrenadeLauncher extends Weapon {
     const dx = targetX - x;
     const dy = targetY - y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const vx = (dx / dist) * this.projectileSpeed;
-    const vy = (dy / dist) * this.projectileSpeed;
+    
+    // Prevent division by zero
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
 
     const projectile = new Projectile(x, y, vx, vy, this.damage, this);
     projectile.isExplosive = true;
@@ -156,8 +170,16 @@ class LaserGun extends Weapon {
     const dx = targetX - x;
     const dy = targetY - y;
     const dist = Math.sqrt(dx * dx + dy * dy);
-    const vx = (dx / dist) * this.projectileSpeed;
-    const vy = (dy / dist) * this.projectileSpeed;
+    
+    // Prevent division by zero
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
 
     const projectile = new Projectile(x, y, vx, vy, this.damage, this);
     projectile.color = '#00ffff';
