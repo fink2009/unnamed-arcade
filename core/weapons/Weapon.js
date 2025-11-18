@@ -80,6 +80,10 @@ class Shotgun extends Weapon {
 
   fire(x, y, targetX, targetY, currentTime) {
     if (!this.canFire(currentTime)) {
+      // If we can't fire due to no ammo, start reloading automatically
+      if (!this.isReloading && this.currentAmmo === 0) {
+        this.reload(currentTime);
+      }
       return null;
     }
 
@@ -185,6 +189,188 @@ class LaserGun extends Weapon {
     projectile.color = '#00ffff';
     projectile.width = 12;
     projectile.height = 2;
+    return projectile;
+  }
+}
+
+// Melee Weapons
+class Knife extends Weapon {
+  constructor() {
+    super('Knife', 35, 300, 999, 0, 20); // High fire rate, infinite ammo, fast
+    this.isMelee = true;
+    this.meleeRange = 60;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.lastFireTime = currentTime;
+
+    // Calculate direction
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#cccccc';
+    projectile.width = 8;
+    projectile.height = 4;
+    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16; // Short lifetime for melee
+    return projectile;
+  }
+}
+
+class Sword extends Weapon {
+  constructor() {
+    super('Sword', 60, 500, 999, 0, 18);
+    this.isMelee = true;
+    this.meleeRange = 80;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.lastFireTime = currentTime;
+
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#aaaaff';
+    projectile.width = 12;
+    projectile.height = 6;
+    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
+    return projectile;
+  }
+}
+
+class Axe extends Weapon {
+  constructor() {
+    super('Axe', 80, 700, 999, 0, 15);
+    this.isMelee = true;
+    this.meleeRange = 70;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.lastFireTime = currentTime;
+
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#884400';
+    projectile.width = 14;
+    projectile.height = 8;
+    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
+    return projectile;
+  }
+}
+
+class Hammer extends Weapon {
+  constructor() {
+    super('Hammer', 100, 900, 999, 0, 12);
+    this.isMelee = true;
+    this.meleeRange = 75;
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.lastFireTime = currentTime;
+
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#666666';
+    projectile.width = 16;
+    projectile.height = 10;
+    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
+    return projectile;
+  }
+}
+
+class Spear extends Weapon {
+  constructor() {
+    super('Spear', 70, 600, 999, 0, 22);
+    this.isMelee = true;
+    this.meleeRange = 100; // Longer range than other melee
+  }
+  
+  fire(x, y, targetX, targetY, currentTime) {
+    if (!this.canFire(currentTime)) {
+      return null;
+    }
+
+    this.lastFireTime = currentTime;
+
+    const dx = targetX - x;
+    const dy = targetY - y;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    
+    let vx, vy;
+    if (dist === 0) {
+      vx = this.projectileSpeed;
+      vy = 0;
+    } else {
+      vx = (dx / dist) * this.projectileSpeed;
+      vy = (dy / dist) * this.projectileSpeed;
+    }
+
+    const projectile = new Projectile(x, y, vx, vy, this.damage, this);
+    projectile.color = '#996633';
+    projectile.width = 20;
+    projectile.height = 4;
+    projectile.lifetime = this.meleeRange / this.projectileSpeed * 16;
     return projectile;
   }
 }

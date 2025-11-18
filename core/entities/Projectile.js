@@ -10,6 +10,8 @@ class Projectile extends Entity {
     this.color = '#ffff00';
     this.maxDistance = 1000;
     this.distanceTraveled = 0;
+    this.lifetime = null; // For melee weapons with short-range
+    this.lifeTimer = 0;
   }
 
   update(deltaTime) {
@@ -21,6 +23,15 @@ class Projectile extends Entity {
     this.y += moveY;
     
     this.distanceTraveled += Math.sqrt(moveX * moveX + moveY * moveY);
+    
+    // Handle lifetime-based destruction (for melee weapons)
+    if (this.lifetime !== null) {
+      this.lifeTimer += deltaTime;
+      if (this.lifeTimer >= this.lifetime) {
+        this.destroy();
+        return;
+      }
+    }
     
     if (this.distanceTraveled > this.maxDistance) {
       this.destroy();

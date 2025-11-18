@@ -179,11 +179,11 @@ class PlayerCharacter extends Entity {
     
     switch (this.characterType) {
       case 'soldier':
-        // Airstrike: Damage all enemies on screen (increased damage and range)
+        // Airstrike: Damage all enemies on screen
         if (gameEngine) {
           gameEngine.enemies.forEach(enemy => {
             if (enemy.active) {
-              enemy.takeDamage(50); // Increased from 30 to 50
+              enemy.takeDamage(40); // Reduced from 50 to 40 for balance
               gameEngine.particleSystem.createExplosion(
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2,

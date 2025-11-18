@@ -104,6 +104,11 @@ class EnemyUnit extends Entity {
   }
 
   takeDamage(amount) {
+    // Bosses with shield active are invulnerable
+    if (this.invulnerable && this.shieldActive) {
+      return false;
+    }
+    
     this.health -= amount;
     if (this.health <= 0) {
       this.health = 0;
@@ -111,8 +116,10 @@ class EnemyUnit extends Entity {
       return true;
     }
     
-    // React to damage
-    if (this.health < this.maxHealth * this.retreatThreshold) {
+    // React to damage - Bosses don't retreat
+    if (this.isBoss) {
+      this.aiState = AIState.CHASE;
+    } else if (this.health < this.maxHealth * this.retreatThreshold) {
       this.aiState = AIState.RETREAT;
     } else {
       this.aiState = AIState.CHASE;
@@ -272,6 +279,11 @@ class EnemyUnit extends Entity {
     // Update weapon
     this.weapon.update(currentTime);
     
+    // Boss-specific mechanics
+    if (this.isBoss && player) {
+      this.updateBossMechanics(currentTime, player, deltaTime);
+    }
+    
     // Ensure patrol bounds respect world boundaries
     if (this.patrolMin < 0) this.patrolMin = 0;
     if (this.patrolMax > worldWidth) this.patrolMax = worldWidth;
@@ -303,6 +315,57 @@ class EnemyUnit extends Entity {
     if (this.y + this.height >= groundLevel) {
       this.y = groundLevel - this.height;
       this.dy = 0;
+    }
+  }
+  
+  updateBossMechanics(currentTime, player, deltaTime) {
+    const healthPercent = this.health / this.maxHealth;
+    
+    // Rage mechanic (The Warlord & The Overlord)
+    if (this.specialMechanic === 'rage' || this.specialMechanic === 'all') {
+      if (healthPercent < 0.5 && !this.enraged) {
+        this.enraged = true;
+        this.speed *= 1.5;
+        this.shootCooldown *= 0.6;
+        this.damage = Math.floor(this.damage * 1.5);
+      }
+    }
+    
+    // Summon mechanic (The Devastator & The Overlord)
+    if ((this.specialMechanic === 'summon' || this.specialMechanic === 'all') && window.game) {
+      if (currentTime - this.lastSummonTime > this.summonCooldown) {
+        this.lastSummonTime = currentTime;
+        // Summon 2 minions near the boss
+        for (let i = 0; i < 2; i++) {
+          const offsetX = (i === 0 ? -150 : 150);
+          const minion = new EnemyUnit(
+            this.x + offsetX,
+            this.y,
+            'scout' // Fast minions
+          );
+          minion.maxHealth = 30;
+          minion.health = 30;
+          window.game.enemies.push(minion);
+          window.game.collisionSystem.add(minion);
+          window.game.enemiesRemaining++;
+        }
+      }
+    }
+    
+    // Shield mechanic (The Annihilator & The Overlord)
+    if ((this.specialMechanic === 'shield' || this.specialMechanic === 'all') && window.game) {
+      if (currentTime - this.lastShieldTime > this.shieldCooldown) {
+        this.lastShieldTime = currentTime;
+        this.shieldActive = true;
+        this.invulnerable = true;
+        // Shield lasts 3 seconds
+        setTimeout(() => {
+          if (this.active) {
+            this.shieldActive = false;
+            this.invulnerable = false;
+          }
+        }, 3000);
+      }
     }
   }
 
@@ -380,6 +443,18 @@ class EnemyUnit extends Entity {
         ctx.fillRect(this.x - 15, this.y - 15, this.width + 30, this.height + 30);
       }
       ctx.globalAlpha = 1;
+      
+      // Shield visual effect
+      if (this.shieldActive) {
+        ctx.globalAlpha = 0.6;
+        ctx.strokeStyle = '#00ffff';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(this.x - 12, this.y - 12, this.width + 24, this.height + 24);
+        ctx.globalAlpha = 0.3;
+        ctx.fillStyle = '#00ffff';
+        ctx.fillRect(this.x - 12, this.y - 12, this.width + 24, this.height + 24);
+        ctx.globalAlpha = 1;
+      }
     }
     
     // === 16-BIT ENEMY SPRITE ===

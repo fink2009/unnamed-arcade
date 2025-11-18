@@ -7,9 +7,10 @@ class GameEngine {
     // Game Engine initialized with comprehensive improvements
     
     // Game state
-    this.state = 'loading'; // loading, menu, character_select, playing, paused, gameover, victory
+    this.state = 'loading'; // loading, menu, character_select, playing, paused, gameover, victory, inventory
     this.mode = 'campaign'; // campaign, survival, multiplayer
     this.menuState = 'main';
+    this.showInventory = false;
     
     // Settings
     this.difficulty = 'medium'; // baby, easy, medium, extreme
@@ -272,10 +273,9 @@ class GameEngine {
       },
       // Level 3: Boss Arena - First Boss
       {
-        name: 'Boss Arena: Commander',
+        name: 'Boss Arena: The Warlord',
         enemies: [
-          { type: 'infantry', count: 2, spacing: 400 },
-          { type: 'boss', count: 1, spacing: 0, position: 1500 }
+          { type: 'boss', count: 1, spacing: 0, position: 1500, bossId: 0 }
         ],
         isBossLevel: true
       },
@@ -299,11 +299,9 @@ class GameEngine {
       },
       // Level 6: Boss Arena - Elite Commander
       {
-        name: 'Boss Arena: Elite Commander',
+        name: 'Boss Arena: The Devastator',
         enemies: [
-          { type: 'heavy', count: 2, spacing: 500 },
-          { type: 'sniper', count: 2, spacing: 700 },
-          { type: 'boss', count: 1, spacing: 0, position: 1800 }
+          { type: 'boss', count: 1, spacing: 0, position: 1800, bossId: 1 }
         ],
         isBossLevel: true
       },
@@ -329,24 +327,17 @@ class GameEngine {
       },
       // Level 9: Elite Commander Boss - Toughest boss before final
       {
-        name: 'Boss Arena: Elite Commander',
+        name: 'Boss Arena: The Annihilator',
         enemies: [
-          { type: 'heavy', count: 3, spacing: 450 },
-          { type: 'sniper', count: 3, spacing: 650 },
-          { type: 'scout', count: 2, spacing: 400 },
-          { type: 'boss', count: 1, spacing: 0, position: 1900 }
+          { type: 'boss', count: 1, spacing: 0, position: 1900, bossId: 2 }
         ],
         isBossLevel: true
       },
       // Level 10: Final Stand - Maximum difficulty ultimate level
       {
-        name: 'Final Stand',
+        name: 'Final Boss: The Overlord',
         enemies: [
-          { type: 'infantry', count: 5, spacing: 250 },
-          { type: 'heavy', count: 4, spacing: 400 },
-          { type: 'sniper', count: 4, spacing: 500 },
-          { type: 'scout', count: 4, spacing: 350 },
-          { type: 'boss', count: 1, spacing: 0, position: 2200 }
+          { type: 'boss', count: 1, spacing: 0, position: 2200, bossId: 3 }
         ],
         isBossLevel: true
       }
@@ -384,16 +375,61 @@ class GameEngine {
         const enemy = new EnemyUnit(x, this.groundLevel - (enemyGroup.type === 'boss' ? 70 : 48), enemyGroup.type);
         enemy.applyDifficulty(difficultyMultiplier);
         
-        // Make final boss (level 10) significantly tougher
-        if (enemyGroup.type === 'boss' && this.currentLevel === 10) {
-          enemy.maxHealth *= 2.5; // 2.5x more health
+        // Apply boss-specific enhancements and mechanics
+        if (enemyGroup.type === 'boss') {
+          const bossId = enemyGroup.bossId !== undefined ? enemyGroup.bossId : 0;
+          
+          // Base boss enhancements - ALL bosses are much stronger
+          enemy.maxHealth *= 8; // 8x base health for all bosses
           enemy.health = enemy.maxHealth;
-          enemy.damage *= 1.8; // 1.8x more damage
-          enemy.speed *= 1.3; // 1.3x faster
-          enemy.shootCooldown *= 0.6; // Shoots 40% faster
-          enemy.aggroRange = 800; // Larger aggro range
-          enemy.attackRange = 700; // Attacks from further away
-          enemy.isFinalBoss = true; // Mark as final boss
+          enemy.damage *= 2.5; // 2.5x more damage
+          enemy.speed *= 1.5; // 1.5x faster
+          enemy.shootCooldown *= 0.4; // Shoots 2.5x faster
+          enemy.aggroRange = 1000; // Massive aggro range
+          enemy.attackRange = 800; // Long attack range
+          enemy.isBoss = true;
+          enemy.bossId = bossId;
+          enemy.bossName = this.getBossName(bossId);
+          
+          // Boss-specific unique mechanics
+          switch (bossId) {
+            case 0: // The Warlord - First boss (Level 3)
+              enemy.bossName = 'The Warlord';
+              enemy.maxHealth *= 1.0; // Standard boss health
+              enemy.specialMechanic = 'rage'; // Gets faster and stronger below 50% HP
+              break;
+            case 1: // The Devastator - Second boss (Level 6)
+              enemy.bossName = 'The Devastator';
+              enemy.maxHealth *= 1.5; // 50% more health
+              enemy.specialMechanic = 'summon'; // Can summon minions
+              enemy.summonCooldown = 15000; // Summon every 15 seconds
+              enemy.lastSummonTime = 0;
+              break;
+            case 2: // The Annihilator - Third boss (Level 9)
+              enemy.bossName = 'The Annihilator';
+              enemy.maxHealth *= 2.0; // 2x health
+              enemy.specialMechanic = 'shield'; // Periodic shield phases
+              enemy.shieldCooldown = 20000;
+              enemy.lastShieldTime = 0;
+              enemy.shieldActive = false;
+              break;
+            case 3: // The Overlord - Final boss (Level 10)
+              enemy.bossName = 'The Overlord';
+              enemy.maxHealth *= 3.0; // 3x health - FINAL BOSS
+              enemy.damage *= 1.5; // Even more damage
+              enemy.speed *= 1.3; // Even faster
+              enemy.shootCooldown *= 0.7; // Shoots even faster
+              enemy.specialMechanic = 'all'; // All mechanics combined
+              enemy.isFinalBoss = true;
+              enemy.summonCooldown = 12000;
+              enemy.lastSummonTime = 0;
+              enemy.shieldCooldown = 18000;
+              enemy.lastShieldTime = 0;
+              enemy.shieldActive = false;
+              break;
+          }
+          
+          enemy.health = enemy.maxHealth;
         }
         
         this.enemies.push(enemy);
@@ -409,9 +445,19 @@ class GameEngine {
     this.currentLevelName = levelConfig.name;
     this.isBossLevel = levelConfig.isBossLevel || false;
   }
+  
+  getBossName(bossId) {
+    const bossNames = [
+      'The Warlord',
+      'The Devastator',
+      'The Annihilator',
+      'The Overlord'
+    ];
+    return bossNames[bossId] || 'Unknown Boss';
+  }
 
   spawnPickups() {
-    const pickupTypes = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun'];
+    const pickupTypes = ['health', 'ammo', 'weapon_rifle', 'weapon_shotgun', 'weapon_knife', 'weapon_sword', 'weapon_axe'];
     
     for (let i = 0; i < 5; i++) {
       const x = 300 + i * 400 + Math.random() * 100;
@@ -1087,10 +1133,19 @@ class GameEngine {
         this.showHelp = !this.showHelp;
       }
       
+      // Toggle inventory (I key)
+      if (this.inputManager.wasKeyPressed('i') || this.inputManager.wasKeyPressed('I')) {
+        this.showInventory = !this.showInventory;
+      }
+      
       // Pause
       if (this.inputManager.wasKeyPressed('Escape')) {
-        this.state = 'paused';
-        this.menuState = 'paused';
+        if (this.showInventory) {
+          this.showInventory = false; // Close inventory first
+        } else {
+          this.state = 'paused';
+          this.menuState = 'paused';
+        }
       }
     } else if (this.state === 'weaponswap') {
       // Weapon swap popup handling
@@ -1098,10 +1153,9 @@ class GameEngine {
         // YES - Choose which weapon to swap
         this.state = 'weaponswapselect';
       } else if (this.inputManager.wasKeyPressed('n') || this.inputManager.wasKeyPressed('N') || this.inputManager.wasKeyPressed('2') || this.inputManager.wasKeyPressed('Escape')) {
-        // NO - Leave weapon on ground, mark pickup as ignored temporarily
+        // NO - Delete the weapon pickup
         if (this.weaponSwapPopup && this.weaponSwapPopup.pickup) {
-          // Mark pickup with a cooldown to prevent immediate re-trigger
-          this.weaponSwapPopup.pickup.ignoredUntil = performance.now() + 2000; // Ignore for 2 seconds
+          this.weaponSwapPopup.pickup.destroy();
         }
         this.weaponSwapPopup = null;
         this.state = 'playing';
@@ -1639,6 +1693,11 @@ class GameEngine {
       
       // Draw achievement notifications (without camera transform)
       this.achievementSystem.render(this.ctx, 10, 60);
+      
+      // Draw inventory if open
+      if (this.showInventory) {
+        this.ui.drawInventory(this.ctx, this.player);
+      }
     }
   }
 
