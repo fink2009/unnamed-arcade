@@ -7,9 +7,10 @@ class GameEngine {
     // Game Engine initialized with comprehensive improvements
     
     // Game state
-    this.state = 'loading'; // loading, menu, character_select, playing, paused, gameover, victory
+    this.state = 'loading'; // loading, menu, character_select, playing, paused, gameover, victory, inventory
     this.mode = 'campaign'; // campaign, survival, multiplayer
     this.menuState = 'main';
+    this.showInventory = false;
     
     // Settings
     this.difficulty = 'medium'; // baby, easy, medium, extreme
@@ -1087,10 +1088,19 @@ class GameEngine {
         this.showHelp = !this.showHelp;
       }
       
+      // Toggle inventory (I key)
+      if (this.inputManager.wasKeyPressed('i') || this.inputManager.wasKeyPressed('I')) {
+        this.showInventory = !this.showInventory;
+      }
+      
       // Pause
       if (this.inputManager.wasKeyPressed('Escape')) {
-        this.state = 'paused';
-        this.menuState = 'paused';
+        if (this.showInventory) {
+          this.showInventory = false; // Close inventory first
+        } else {
+          this.state = 'paused';
+          this.menuState = 'paused';
+        }
       }
     } else if (this.state === 'weaponswap') {
       // Weapon swap popup handling
@@ -1098,10 +1108,9 @@ class GameEngine {
         // YES - Choose which weapon to swap
         this.state = 'weaponswapselect';
       } else if (this.inputManager.wasKeyPressed('n') || this.inputManager.wasKeyPressed('N') || this.inputManager.wasKeyPressed('2') || this.inputManager.wasKeyPressed('Escape')) {
-        // NO - Leave weapon on ground, mark pickup as ignored temporarily
+        // NO - Delete the weapon pickup
         if (this.weaponSwapPopup && this.weaponSwapPopup.pickup) {
-          // Mark pickup with a cooldown to prevent immediate re-trigger
-          this.weaponSwapPopup.pickup.ignoredUntil = performance.now() + 2000; // Ignore for 2 seconds
+          this.weaponSwapPopup.pickup.destroy();
         }
         this.weaponSwapPopup = null;
         this.state = 'playing';
@@ -1639,6 +1648,11 @@ class GameEngine {
       
       // Draw achievement notifications (without camera transform)
       this.achievementSystem.render(this.ctx, 10, 60);
+      
+      // Draw inventory if open
+      if (this.showInventory) {
+        this.ui.drawInventory(this.ctx, this.player);
+      }
     }
   }
 

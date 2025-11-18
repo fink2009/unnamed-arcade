@@ -49,6 +49,26 @@ class Pickup extends Entity {
         this.color = '#00ffff';
         this.weapon = new LaserGun();
         break;
+      case 'weapon_knife':
+        this.color = '#cccccc';
+        this.weapon = new Knife();
+        break;
+      case 'weapon_sword':
+        this.color = '#aaaaff';
+        this.weapon = new Sword();
+        break;
+      case 'weapon_axe':
+        this.color = '#884400';
+        this.weapon = new Axe();
+        break;
+      case 'weapon_hammer':
+        this.color = '#666666';
+        this.weapon = new Hammer();
+        break;
+      case 'weapon_spear':
+        this.color = '#996633';
+        this.weapon = new Spear();
+        break;
       case 'powerup_invincibility':
         this.color = '#ffffff';
         this.duration = 5000;
@@ -111,6 +131,11 @@ class Pickup extends Entity {
       case 'weapon_sniper':
       case 'weapon_grenade':
       case 'weapon_laser':
+      case 'weapon_knife':
+      case 'weapon_sword':
+      case 'weapon_axe':
+      case 'weapon_hammer':
+      case 'weapon_spear':
         player.addWeapon(this.weapon);
         break;
       case 'powerup_invincibility':
