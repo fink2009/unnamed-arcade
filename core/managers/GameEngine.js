@@ -46,7 +46,7 @@ class GameEngine {
     this.kills = 0;
     this.wave = 1;
     this.currentLevel = 1; // Campaign level
-    this.maxLevel = 7; // Total campaign levels including boss arenas
+    this.maxLevel = 10; // Total campaign levels including boss arenas
     this.enemiesRemaining = 0;
     this.waveTimer = 0;
     this.waveDuration = 30000; // 30 seconds per wave
@@ -305,15 +305,46 @@ class GameEngine {
         ],
         isBossLevel: true
       },
-      // Level 7: Final Stand - Maximum difficulty
+      // Level 7: Urban Warfare - City ruins with multi-tier combat
+      {
+        name: 'Urban Warfare',
+        enemies: [
+          { type: 'infantry', count: 5, spacing: 280 },
+          { type: 'heavy', count: 3, spacing: 450 },
+          { type: 'sniper', count: 4, spacing: 550 },
+          { type: 'scout', count: 4, spacing: 320 }
+        ]
+      },
+      // Level 8: Industrial Complex - Factory with moving platforms feel
+      {
+        name: 'Industrial Complex',
+        enemies: [
+          { type: 'infantry', count: 6, spacing: 300 },
+          { type: 'heavy', count: 4, spacing: 420 },
+          { type: 'sniper', count: 3, spacing: 600 },
+          { type: 'scout', count: 5, spacing: 340 }
+        ]
+      },
+      // Level 9: Elite Commander Boss - Toughest boss before final
+      {
+        name: 'Boss Arena: Elite Commander',
+        enemies: [
+          { type: 'heavy', count: 3, spacing: 450 },
+          { type: 'sniper', count: 3, spacing: 650 },
+          { type: 'scout', count: 2, spacing: 400 },
+          { type: 'boss', count: 1, spacing: 0, position: 1900 }
+        ],
+        isBossLevel: true
+      },
+      // Level 10: Final Stand - Maximum difficulty ultimate level
       {
         name: 'Final Stand',
         enemies: [
-          { type: 'infantry', count: 4, spacing: 250 },
-          { type: 'heavy', count: 3, spacing: 400 },
-          { type: 'sniper', count: 3, spacing: 500 },
-          { type: 'scout', count: 3, spacing: 350 },
-          { type: 'boss', count: 1, spacing: 0, position: 2000 }
+          { type: 'infantry', count: 5, spacing: 250 },
+          { type: 'heavy', count: 4, spacing: 400 },
+          { type: 'sniper', count: 4, spacing: 500 },
+          { type: 'scout', count: 4, spacing: 350 },
+          { type: 'boss', count: 1, spacing: 0, position: 2200 }
         ],
         isBossLevel: true
       }
@@ -351,8 +382,8 @@ class GameEngine {
         const enemy = new EnemyUnit(x, this.groundLevel - (enemyGroup.type === 'boss' ? 70 : 48), enemyGroup.type);
         enemy.applyDifficulty(difficultyMultiplier);
         
-        // Make final boss (level 7) significantly tougher
-        if (enemyGroup.type === 'boss' && this.currentLevel === 7) {
+        // Make final boss (level 10) significantly tougher
+        if (enemyGroup.type === 'boss' && this.currentLevel === 10) {
           enemy.maxHealth *= 2.5; // 2.5x more health
           enemy.health = enemy.maxHealth;
           enemy.damage *= 1.8; // 1.8x more damage
@@ -505,22 +536,70 @@ class GameEngine {
         ]
       },
       
-      // Level 7: Final Stand - Most complex with everything
+      // Level 7: Urban Warfare - City ruins feel with scattered platforms
       {
         platforms: [
-          { x: 250, y: this.groundLevel - 150, width: 200, height: 20, type: 'passthrough' },
-          { x: 600, y: this.groundLevel - 220, width: 250, height: 25, type: 'solid' },
-          { x: 1000, y: this.groundLevel - 180, width: 200, height: 20, type: 'passthrough' },
-          { x: 1350, y: this.groundLevel - 260, width: 280, height: 25, type: 'solid' },
-          { x: 400, y: this.groundLevel - 320, width: 300, height: 20, type: 'passthrough' },
-          { x: 1100, y: this.groundLevel - 350, width: 350, height: 20, type: 'passthrough' },
+          { x: 280, y: this.groundLevel - 130, width: 160, height: 20, type: 'passthrough' },
+          { x: 600, y: this.groundLevel - 200, width: 200, height: 25, type: 'solid' },
+          { x: 950, y: this.groundLevel - 150, width: 180, height: 20, type: 'passthrough' },
+          { x: 1280, y: this.groundLevel - 220, width: 240, height: 25, type: 'solid' },
+          { x: 450, y: this.groundLevel - 290, width: 280, height: 20, type: 'passthrough' },
         ],
         slopes: [
-          { x: 150, y: this.groundLevel - 100, width: 100, height: 100, direction: 'up' },
-          { x: 450, y: this.groundLevel - 150, width: 150, height: 70, direction: 'up' },
-          { x: 850, y: this.groundLevel - 220, width: 150, height: 40, direction: 'down' },
-          { x: 1250, y: this.groundLevel - 180, width: 100, height: 80, direction: 'up' },
-          { x: 1630, y: this.groundLevel - 260, width: 170, height: 120, direction: 'down' },
+          { x: 180, y: this.groundLevel - 90, width: 100, height: 90, direction: 'up' },
+          { x: 800, y: this.groundLevel - 200, width: 150, height: 50, direction: 'down' },
+          { x: 1520, y: this.groundLevel - 180, width: 140, height: 90, direction: 'down' },
+        ]
+      },
+      
+      // Level 8: Industrial Complex - Dense platforms simulating factory floors
+      {
+        platforms: [
+          { x: 200, y: this.groundLevel - 140, width: 220, height: 25, type: 'solid' },
+          { x: 500, y: this.groundLevel - 210, width: 260, height: 25, type: 'solid' },
+          { x: 850, y: this.groundLevel - 150, width: 200, height: 25, type: 'solid' },
+          { x: 1150, y: this.groundLevel - 240, width: 300, height: 25, type: 'solid' },
+          { x: 350, y: this.groundLevel - 310, width: 320, height: 20, type: 'passthrough' },
+          { x: 900, y: this.groundLevel - 330, width: 350, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 420, y: this.groundLevel - 140, width: 80, height: 70, direction: 'up' },
+          { x: 760, y: this.groundLevel - 210, width: 90, height: 60, direction: 'down' },
+          { x: 1050, y: this.groundLevel - 150, width: 100, height: 90, direction: 'up' },
+        ]
+      },
+      
+      // Level 9: Elite Commander Boss - Large arena with strategic positions
+      {
+        platforms: [
+          { x: 280, y: this.groundLevel - 160, width: 300, height: 30, type: 'solid' },
+          { x: 800, y: this.groundLevel - 240, width: 380, height: 30, type: 'solid' },
+          { x: 1350, y: this.groundLevel - 160, width: 300, height: 30, type: 'solid' },
+          { x: 550, y: this.groundLevel - 320, width: 600, height: 25, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 120, y: this.groundLevel - 160, width: 160, height: 160, direction: 'up' },
+          { x: 1650, y: this.groundLevel - 160, width: 160, height: 160, direction: 'down' },
+        ]
+      },
+      
+      // Level 10: Final Stand - Most complex and challenging terrain
+      {
+        platforms: [
+          { x: 230, y: this.groundLevel - 140, width: 190, height: 20, type: 'passthrough' },
+          { x: 550, y: this.groundLevel - 210, width: 240, height: 25, type: 'solid' },
+          { x: 920, y: this.groundLevel - 170, width: 200, height: 20, type: 'passthrough' },
+          { x: 1250, y: this.groundLevel - 250, width: 270, height: 25, type: 'solid' },
+          { x: 400, y: this.groundLevel - 310, width: 290, height: 20, type: 'passthrough' },
+          { x: 1000, y: this.groundLevel - 340, width: 340, height: 20, type: 'passthrough' },
+          { x: 600, y: this.groundLevel - 400, width: 500, height: 20, type: 'passthrough' },
+        ],
+        slopes: [
+          { x: 140, y: this.groundLevel - 95, width: 90, height: 95, direction: 'up' },
+          { x: 420, y: this.groundLevel - 140, width: 130, height: 70, direction: 'up' },
+          { x: 790, y: this.groundLevel - 210, width: 130, height: 40, direction: 'down' },
+          { x: 1120, y: this.groundLevel - 170, width: 130, height: 80, direction: 'up' },
+          { x: 1520, y: this.groundLevel - 250, width: 150, height: 110, direction: 'down' },
         ]
       }
     ];
@@ -993,8 +1072,8 @@ class GameEngine {
           if (this.player.dy >= 0 && 
               playerBounds.bottom <= platformBounds.top + 10 &&
               playerBounds.bottom >= platformBounds.top - 5 &&
-              playerBounds.right > platformBounds.left &&
-              playerBounds.left < platformBounds.right) {
+              playerBounds.right > platformBounds.left + 5 &&
+              playerBounds.left < platformBounds.right - 5) {
             // Land on platform
             this.player.y = platformBounds.top - this.player.height;
             this.player.dy = 0;
@@ -1011,7 +1090,8 @@ class GameEngine {
             const minOverlapX = Math.min(overlapLeft, overlapRight);
             const minOverlapY = Math.min(overlapTop, overlapBottom);
             
-            if (minOverlapX < minOverlapY) {
+            // Only apply horizontal collision if not landing from above
+            if (minOverlapX < minOverlapY && overlapTop > 10) {
               // Push horizontally
               if (overlapLeft < overlapRight) {
                 this.player.x = platformBounds.left - this.player.width;
@@ -1019,6 +1099,10 @@ class GameEngine {
                 this.player.x = platformBounds.right;
               }
               this.player.dx = 0;
+            } else if (this.player.dy < 0 && overlapBottom < 15) {
+              // Bonk head on solid platform from below
+              this.player.y = platformBounds.bottom;
+              this.player.dy = 0;
             }
           }
         }
