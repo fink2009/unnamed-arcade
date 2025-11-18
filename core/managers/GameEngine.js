@@ -112,6 +112,10 @@ class GameEngine {
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       this.state = 'menu';
+      
+      // Play menu music
+      this.audioManager.playMusic('menu');
+      
       this.start();
     } catch (error) {
       console.error('Initialization error:', error);
@@ -130,6 +134,10 @@ class GameEngine {
     this.selectedCharacter = character;
     this.state = 'playing';
     this.menuState = null; // Reset menu state to ensure game renders properly
+    
+    // Start gameplay music
+    this.audioManager.stopMusic();
+    this.audioManager.playMusic('gameplay');
     
     // Reset game state
     this.score = 0;
@@ -933,21 +941,29 @@ class GameEngine {
   handleInput() {
     if (this.state === 'character_select' || this.menuState === 'character') {
       if (this.inputManager.wasKeyPressed('1')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.startGame(this.mode, 'soldier');
       } else if (this.inputManager.wasKeyPressed('2')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.startGame(this.mode, 'scout');
       } else if (this.inputManager.wasKeyPressed('3')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.startGame(this.mode, 'heavy');
       } else if (this.inputManager.wasKeyPressed('4')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.startGame(this.mode, 'medic');
       } else if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
         this.menuState = 'main';
+        this.audioManager.playMusic('menu');
       }
     } else if (this.menuState === 'settings') {
       // Page navigation
       if (this.inputManager.wasKeyPressed('ArrowLeft')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
         this.settingsPage = Math.max(0, this.settingsPage - 1);
       } else if (this.inputManager.wasKeyPressed('ArrowRight')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
         this.settingsPage = Math.min(2, this.settingsPage + 1);
       }
       
@@ -963,18 +979,30 @@ class GameEngine {
           this.difficulty = 'extreme';
         } else if (this.inputManager.wasKeyPressed('5')) {
           this.audioEnabled = !this.audioEnabled;
+          this.audioManager.setEnabled(this.audioEnabled);
+          this.audioManager.playSound('menu_navigate', 0.3);
         } else if (this.inputManager.wasKeyPressed('6')) {
           this.masterVolume = Math.max(0, this.masterVolume - 0.1);
+          this.audioManager.setMasterVolume(this.masterVolume);
+          this.audioManager.playSound('menu_navigate', 0.3);
         } else if (this.inputManager.wasKeyPressed('7')) {
           this.masterVolume = Math.min(1, this.masterVolume + 0.1);
+          this.audioManager.setMasterVolume(this.masterVolume);
+          this.audioManager.playSound('menu_navigate', 0.3);
         } else if (this.inputManager.wasKeyPressed('8')) {
           this.sfxVolume = Math.max(0, this.sfxVolume - 0.1);
+          this.audioManager.setSFXVolume(this.sfxVolume);
+          this.audioManager.playSound('menu_navigate', 0.3);
         } else if (this.inputManager.wasKeyPressed('9')) {
           this.sfxVolume = Math.min(1, this.sfxVolume + 0.1);
+          this.audioManager.setSFXVolume(this.sfxVolume);
+          this.audioManager.playSound('menu_navigate', 0.3);
         } else if (this.inputManager.wasKeyPressed('0')) {
           this.musicVolume = Math.max(0, this.musicVolume - 0.1);
+          this.audioManager.setMusicVolume(this.musicVolume);
         } else if (this.inputManager.wasKeyPressed('-')) {
           this.musicVolume = Math.min(1, this.musicVolume + 0.1);
+          this.audioManager.setMusicVolume(this.musicVolume);
         }
       }
       // Page 1: Graphics & Display
@@ -1029,28 +1057,36 @@ class GameEngine {
       }
       
       if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
         this.menuState = 'main';
       }
     } else if (this.menuState === 'controls') {
       if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
         this.menuState = 'main';
       }
     } else if (this.menuState === 'highscores') {
       if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
         this.menuState = 'main';
       }
     } else if (this.state === 'menu') {
       if (this.inputManager.wasKeyPressed('1')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'character';
         this.mode = 'campaign';
       } else if (this.inputManager.wasKeyPressed('2')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'character';
         this.mode = 'survival';
       } else if (this.inputManager.wasKeyPressed('3')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'settings';
       } else if (this.inputManager.wasKeyPressed('4')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'controls';
       } else if (this.inputManager.wasKeyPressed('5')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.menuState = 'highscores';
       }
     } else if (this.state === 'playing') {
@@ -1063,8 +1099,20 @@ class GameEngine {
           const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime);
           
           if (result) {
-            // Play shoot sound
-            this.audioManager.playSound('shoot', 0.5);
+            // Play weapon-specific sound
+            const weapon = this.player.getCurrentWeapon();
+            let soundName = 'shoot';
+            
+            if (weapon.name === 'Pistol') soundName = 'shoot_pistol';
+            else if (weapon.name === 'Rifle') soundName = 'shoot_rifle';
+            else if (weapon.name === 'Shotgun') soundName = 'shoot_shotgun';
+            else if (weapon.name === 'Machine Gun') soundName = 'shoot_machinegun';
+            else if (weapon.name === 'Sniper Rifle') soundName = 'shoot_sniper';
+            else if (weapon.name === 'Grenade Launcher') soundName = 'shoot_grenade';
+            else if (weapon.name === 'Laser Gun') soundName = 'shoot_laser';
+            else if (weapon.isMelee) soundName = 'shoot_melee';
+            
+            this.audioManager.playSound(soundName, 0.5);
             
             // Track shots fired
             if (Array.isArray(result)) {
@@ -1083,13 +1131,18 @@ class GameEngine {
         
         // Reload
         if (this.inputManager.isKeyPressed('r') || this.inputManager.isKeyPressed('R')) {
-          this.player.reload(this.currentTime);
+          const weapon = this.player.getCurrentWeapon();
+          if (!weapon.isReloading && weapon.currentAmmo < weapon.ammoCapacity) {
+            this.player.reload(this.currentTime);
+            this.audioManager.playSound('reload', 0.4);
+          }
         }
         
         // Auto-reload when out of ammo
         if (this.autoReload && this.player.getCurrentWeapon().currentAmmo === 0 && 
             !this.player.getCurrentWeapon().isReloading) {
           this.player.reload(this.currentTime);
+          this.audioManager.playSound('reload', 0.4);
         }
         
         // Jump
@@ -1108,15 +1161,24 @@ class GameEngine {
             this.inputManager.wasKeyPressed('q') || this.inputManager.wasKeyPressed('Q')) {
           const result = this.player.useSpecialAbility(this.currentTime, this);
           if (result) {
-            // Visual/audio feedback for ability use
-            this.audioManager.playSound('ability', 0.8);
+            // Play ability-specific sound
+            let abilitySound = 'ability';
             if (result === 'airstrike') {
+              abilitySound = 'ability_airstrike';
               this.camera.shake(10, 500);
+            } else if (result === 'sprint') {
+              abilitySound = 'ability_sprint';
+            } else if (result === 'shield') {
+              abilitySound = 'ability_shield';
+            } else if (result === 'medpack') {
+              abilitySound = 'ability_medpack';
             }
+            this.audioManager.playSound(abilitySound, 0.8);
           }
         }
         
         // Weapon switching
+        const oldWeaponIndex = this.player.currentWeaponIndex;
         if (this.inputManager.isKeyPressed('1')) {
           this.player.switchWeapon(0);
         } else if (this.inputManager.isKeyPressed('2')) {
@@ -1125,6 +1187,11 @@ class GameEngine {
           this.player.switchWeapon(2);
         } else if (this.inputManager.isKeyPressed('4')) {
           this.player.switchWeapon(3);
+        }
+        
+        // Play weapon switch sound if weapon changed
+        if (oldWeaponIndex !== this.player.currentWeaponIndex) {
+          this.audioManager.playSound('weapon_switch', 0.3);
         }
       }
       
@@ -1177,19 +1244,28 @@ class GameEngine {
       }
     } else if (this.state === 'paused') {
       if (this.inputManager.wasKeyPressed('Escape')) {
+        this.audioManager.playSound('menu_navigate', 0.3);
         this.state = 'playing';
       } else if (this.inputManager.wasKeyPressed('m') || this.inputManager.wasKeyPressed('M')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.state = 'menu';
         this.menuState = 'main';
+        this.audioManager.stopMusic();
+        this.audioManager.playMusic('menu');
       } else if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.startGame(this.mode, this.selectedCharacter);
       }
     } else if (this.state === 'gameover' || this.state === 'victory') {
       if (this.inputManager.wasKeyPressed('r') || this.inputManager.wasKeyPressed('R')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.startGame(this.mode, this.selectedCharacter);
       } else if (this.inputManager.wasKeyPressed('m') || this.inputManager.wasKeyPressed('M')) {
+        this.audioManager.playSound('menu_select', 0.5);
         this.state = 'menu';
         this.menuState = 'main';
+        this.audioManager.stopMusic();
+        this.audioManager.playMusic('menu');
       }
     }
   }
@@ -1215,6 +1291,10 @@ class GameEngine {
           accuracy: accuracy
         });
       }
+      
+      // Play game over music
+      this.audioManager.stopMusic();
+      this.audioManager.playMusic('gameover');
       
       this.state = 'gameover';
       this.menuState = 'gameover';
@@ -1284,6 +1364,9 @@ class GameEngine {
         const waveBonus = this.wave * 500;
         this.score += waveBonus;
         
+        // Play wave complete sound
+        this.audioManager.playSound('pickup_powerup', 0.7);
+        
         // Reset wave damage tracking
         this.damageTakenThisWave = 0;
         
@@ -1299,6 +1382,9 @@ class GameEngine {
           // Award level completion bonus
           const levelBonus = this.currentLevel * 1000;
           this.score += levelBonus;
+          
+          // Play level complete sound
+          this.audioManager.playSound('pickup_powerup', 0.8);
           
           // Show level complete message briefly
           this.state = 'levelcomplete';
@@ -1321,6 +1407,13 @@ class GameEngine {
               this.state = 'playing';
               this.menuState = null;
               
+              // Switch music for boss levels
+              if (this.isBossLevel) {
+                this.audioManager.playMusic('boss');
+              } else {
+                this.audioManager.playMusic('gameplay');
+              }
+              
               // Heal player between levels
               this.player.heal(30);
             }
@@ -1331,6 +1424,10 @@ class GameEngine {
           this.state = 'victory';
           this.menuState = 'victory';
           this.ui.setLastScore(this.score);
+          
+          // Play victory music
+          this.audioManager.stopMusic();
+          this.audioManager.playMusic('victory');
         }
       }
     }
@@ -1485,11 +1582,28 @@ class GameEngine {
             this.weaponsCollected++;
             pickup.apply(this.player);
             this.score += 50;
+            this.audioManager.playSound('pickup_weapon', 0.6);
           }
-        } else {
-          // Non-weapon pickups apply immediately
+        } else if (pickup.pickupType === 'health' || pickup.pickupType === 'healing') {
+          // Health pickups
           pickup.apply(this.player);
           this.score += 50;
+          this.audioManager.playSound('pickup_health', 0.6);
+        } else if (pickup.pickupType === 'ammo') {
+          // Ammo pickups
+          pickup.apply(this.player);
+          this.score += 50;
+          this.audioManager.playSound('pickup_ammo', 0.6);
+        } else if (pickup.pickupType && pickup.pickupType.startsWith('powerup_')) {
+          // Power-up pickups
+          pickup.apply(this.player);
+          this.score += 50;
+          this.audioManager.playSound('pickup_powerup', 0.7);
+        } else {
+          // Generic pickups
+          pickup.apply(this.player);
+          this.score += 50;
+          this.audioManager.playSound('pickup', 0.6);
         }
       }
     });
@@ -1504,6 +1618,13 @@ class GameEngine {
           if (enemy.active && proj.active && proj.collidesWith(enemy)) {
             const killed = enemy.takeDamage(proj.damage);
             proj.destroy();
+            
+            // Play hit sound - explosive projectiles get explosion sound
+            if (proj.isExplosive) {
+              this.audioManager.playSound('explosion', 0.6);
+            } else {
+              this.audioManager.playSound('enemy_hit', 0.3);
+            }
             
             // Track hits and damage
             this.shotsHit++;
@@ -1532,6 +1653,9 @@ class GameEngine {
                 enemy.x + enemy.width / 2,
                 enemy.y + enemy.height / 2
               );
+              
+              // Play small explosion on enemy death
+              this.audioManager.playSound('explosion', 0.3);
               
               // Screen shake on enemy kill
               this.camera.shake(3, 150);
@@ -1587,6 +1711,8 @@ class GameEngine {
           if (damaged) {
             this.totalDamageTaken += proj.damage;
             this.damageTakenThisWave += proj.damage;
+            // Play player hit sound
+            this.audioManager.playSound('player_hit', 0.5);
           }
           proj.destroy();
           this.particleSystem.createExplosion(
@@ -1610,6 +1736,9 @@ class GameEngine {
           // Destroy projectile when it hits cover
           proj.destroy();
           
+          // Play impact sound
+          this.audioManager.playSound('projectile_impact', 0.2);
+          
           // Damage cover slightly
           const destroyed = cover.takeDamage(proj.damage * 0.1); // Cover takes 10% of bullet damage
           
@@ -1623,6 +1752,7 @@ class GameEngine {
           
           // If cover is destroyed, create debris
           if (destroyed) {
+            this.audioManager.playSound('cover_destroy', 0.5);
             this.particleSystem.createExplosion(
               cover.x + cover.width / 2,
               cover.y + cover.height / 2,
