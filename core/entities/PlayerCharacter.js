@@ -20,9 +20,10 @@ class PlayerCharacter extends Entity {
     this.onGround = false;
     this.facing = 1; // 1 = right, -1 = left
     
-    // Combat
-    this.weapons = [new Pistol()];
-    this.currentWeaponIndex = 0;
+    // Combat - separate ranged and melee weapons
+    this.rangedWeapons = [new Pistol()];
+    this.currentRangedWeaponIndex = 0;
+    this.meleeWeapon = null; // No melee weapon by default
     this.score = 0;
     this.kills = 0;
     
@@ -82,31 +83,39 @@ class PlayerCharacter extends Entity {
   }
 
   getCurrentWeapon() {
-    return this.weapons[this.currentWeaponIndex];
+    return this.rangedWeapons[this.currentRangedWeaponIndex];
   }
 
   switchWeapon(index) {
-    if (index >= 0 && index < this.weapons.length) {
-      this.currentWeaponIndex = index;
+    if (index >= 0 && index < this.rangedWeapons.length) {
+      this.currentRangedWeaponIndex = index;
     }
   }
 
   addWeapon(weapon) {
-    if (!this.weapons.find(w => w.name === weapon.name)) {
-      this.weapons.push(weapon);
+    if (weapon.isMelee) {
+      // Replace melee weapon
+      this.meleeWeapon = weapon;
+    } else {
+      // Add to ranged weapons if not already present
+      if (!this.rangedWeapons.find(w => w.name === weapon.name)) {
+        this.rangedWeapons.push(weapon);
+      }
     }
   }
 
   shoot(targetX, targetY, currentTime, isMeleeAttack = false) {
-    const weapon = this.getCurrentWeapon();
+    let weapon;
     
-    // Only allow melee attack if weapon is melee and isMeleeAttack is true
-    // Or only allow ranged attack if weapon is not melee and isMeleeAttack is false
-    if (weapon.isMelee && !isMeleeAttack) {
-      return null; // Can't shoot melee weapon with ranged attack button
-    }
-    if (!weapon.isMelee && isMeleeAttack) {
-      return null; // Can't melee attack with ranged weapon
+    if (isMeleeAttack) {
+      // Use melee weapon if available
+      if (!this.meleeWeapon) {
+        return null; // No melee weapon equipped
+      }
+      weapon = this.meleeWeapon;
+    } else {
+      // Use current ranged weapon
+      weapon = this.getCurrentWeapon();
     }
     
     const gunX = this.x + this.width / 2 + (this.facing * 15);
@@ -114,7 +123,7 @@ class PlayerCharacter extends Entity {
     
     const result = weapon.fire(gunX, gunY, targetX, targetY, currentTime);
     
-    // Multi-shot power-up: fire additional projectiles at slight angles
+    // Multi-shot power-up: fire additional projectiles at slight angles (ranged only)
     if (this.hasMultiShot && result && !isMeleeAttack) {
       const projectiles = Array.isArray(result) ? result : [result];
       const additionalProjectiles = [];
@@ -191,26 +200,37 @@ class PlayerCharacter extends Entity {
       case 'soldier':
         // Airstrike: Drop bombs on enemies
         if (gameEngine) {
-          // Create bombs that drop from the top of the screen onto each enemy
+          // Capture enemy positions immediately to avoid issues with forEach closures
+          const enemyTargets = [];
           gameEngine.enemies.forEach((enemy, index) => {
-            if (enemy.active) {
-              const bombX = enemy.x + enemy.width / 2;
-              const bombY = -50; // Start above screen
-              const targetY = enemy.y + enemy.height / 2;
-              
-              // Stagger bomb drops for visual effect
-              gameEngine.particleSystem.createBombDrop(bombX, bombY, targetY, index * 100);
-              
-              // Deal damage after bomb lands (with delay)
-              setTimeout(() => {
-                if (enemy.active) {
-                  enemy.takeDamage(40);
-                }
-              }, index * 100 + 800); // Delay matches bomb drop time
+            if (enemy.active && enemy.health > 0) {
+              enemyTargets.push({
+                enemy: enemy,
+                bombX: enemy.x + enemy.width / 2,
+                bombY: -50,
+                targetY: enemy.y + enemy.height / 2,
+                delay: index * 100
+              });
             }
           });
+          
+          // Create bombs for each target
+          enemyTargets.forEach((target) => {
+            gameEngine.particleSystem.createBombDrop(target.bombX, target.bombY, target.targetY, target.delay);
+            
+            // Schedule damage using a safer approach
+            const damageTimeout = setTimeout(() => {
+              if (target.enemy && target.enemy.active && target.enemy.health > 0) {
+                target.enemy.takeDamage(40);
+              }
+              clearTimeout(damageTimeout);
+            }, target.delay + 800);
+          });
         }
-        setTimeout(() => { this.specialAbilityActive = false; }, 2000);
+        const abilityTimeout = setTimeout(() => { 
+          this.specialAbilityActive = false;
+          clearTimeout(abilityTimeout);
+        }, 2000);
         return 'airstrike';
         
       case 'scout':
@@ -278,8 +298,13 @@ class PlayerCharacter extends Entity {
   update(deltaTime, inputManager, groundLevel, currentTime, worldWidth) {
     const dt = deltaTime / 16;
     
-    // Update weapon
+    // Update ranged weapon
     this.getCurrentWeapon().update(currentTime);
+    
+    // Update melee weapon if equipped
+    if (this.meleeWeapon) {
+      this.meleeWeapon.update(currentTime);
+    }
     
     // Handle rolling
     if (this.isRolling) {

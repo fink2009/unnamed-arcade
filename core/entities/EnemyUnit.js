@@ -138,13 +138,10 @@ class EnemyUnit extends Entity {
     // State machine
     this.stateTimer += deltaTime;
     
-    // Bosses have hyper-aggressive AI - always chase and attack
+    // Bosses have hyper-aggressive AI - always chase and attack regardless of distance
     if (this.isBoss) {
-      if (distToPlayer < this.attackRange) {
-        this.changeState(AIState.ATTACK, currentTime);
-      } else {
-        this.changeState(AIState.CHASE, currentTime);
-      }
+      // Bosses always attack - no distance checks
+      this.changeState(AIState.ATTACK, currentTime);
       return; // Skip normal AI logic for bosses
     }
     
@@ -238,18 +235,13 @@ class EnemyUnit extends Entity {
     // Bosses continue moving while attacking - relentless pursuit
     if (this.isBoss) {
       const distToPlayer = Math.abs(player.x - this.x);
-      // Keep chasing if not in optimal range
-      if (distToPlayer > this.attackRange * 0.5) {
-        if (this.x < player.x) {
-          this.dx = this.speed * 0.7; // Move at 70% speed while attacking
-          this.facing = 1;
-        } else {
-          this.dx = -this.speed * 0.7;
-          this.facing = -1;
-        }
+      // Keep chasing aggressively regardless of distance
+      if (this.x < player.x) {
+        this.dx = this.speed * 0.8; // Move at 80% speed while attacking
+        this.facing = 1;
       } else {
-        this.dx = 0;
-        this.facing = player.x > this.x ? 1 : -1;
+        this.dx = -this.speed * 0.8;
+        this.facing = -1;
       }
     } else {
       // Normal enemies stop moving and shoot
@@ -257,6 +249,7 @@ class EnemyUnit extends Entity {
       this.facing = player.x > this.x ? 1 : -1;
     }
     
+    // Always shoot when cooldown is ready
     if (currentTime - this.lastShotTime > this.shootCooldown) {
       this.lastShotTime = currentTime;
       return this.shoot(player.x + player.width / 2, player.y + player.height / 2, currentTime);

@@ -1494,9 +1494,9 @@ class GameEngine {
   }
 
   swapWeapon(slotIndex) {
-    if (this.weaponSwapPopup && this.player && slotIndex >= 0 && slotIndex < this.player.weapons.length) {
-      // Replace weapon in selected slot
-      this.player.weapons[slotIndex] = this.weaponSwapPopup.weapon;
+    if (this.weaponSwapPopup && this.player && slotIndex >= 0 && slotIndex < this.player.rangedWeapons.length) {
+      // Replace ranged weapon in selected slot
+      this.player.rangedWeapons[slotIndex] = this.weaponSwapPopup.weapon;
       
       // Destroy the pickup
       this.weaponSwapPopup.pickup.destroy();
@@ -1631,8 +1631,15 @@ class GameEngine {
         
         // Handle weapon pickups with swap popup
         if (pickup.pickupType && pickup.pickupType.startsWith('weapon_')) {
-          // Check if player already has 4 weapons (max capacity)
-          if (this.player.weapons.length >= 4) {
+          // Melee weapons auto-equip (only one melee slot)
+          if (pickup.weapon && pickup.weapon.isMelee) {
+            this.weaponsCollected++;
+            pickup.apply(this.player);
+            this.score += 50;
+            this.audioManager.playSound('pickup_weapon', 0.6);
+          }
+          // Check if player already has 4 ranged weapons (max capacity)
+          else if (this.player.rangedWeapons.length >= 4) {
             // Show weapon swap popup
             this.weaponSwapPopup = {
               weapon: pickup.weapon,
