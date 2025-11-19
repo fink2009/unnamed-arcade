@@ -1222,7 +1222,7 @@ class GameEngine {
         }
         
         // Weapon switching
-        const oldWeaponIndex = this.player.currentWeaponIndex;
+        const oldWeaponIndex = this.player.currentRangedWeaponIndex;
         if (this.inputManager.isKeyPressed('1')) {
           this.player.switchWeapon(0);
         } else if (this.inputManager.isKeyPressed('2')) {
@@ -1234,7 +1234,7 @@ class GameEngine {
         }
         
         // Play weapon switch sound if weapon changed
-        if (oldWeaponIndex !== this.player.currentWeaponIndex) {
+        if (oldWeaponIndex !== this.player.currentRangedWeaponIndex) {
           this.audioManager.playSound('weapon_switch', 0.3);
         }
       }
