@@ -241,6 +241,58 @@ class GameUI {
       powerupY -= 20;
     }
     
+    // Melee combo indicator
+    if (player.meleeCombo > 0 && player.getCurrentMeleeWeapon()) {
+      ctx.fillStyle = '#ffaa00';
+      ctx.font = 'bold 18px monospace';
+      const pulseScale = 1 + Math.sin(Date.now() / 100) * 0.1;
+      ctx.save();
+      const comboX = 220;
+      const comboY = this.height - 65;
+      ctx.translate(comboX, comboY);
+      ctx.scale(pulseScale, pulseScale);
+      ctx.translate(-comboX, -comboY);
+      ctx.fillText(`⚔️ COMBO x${player.meleeCombo}`, comboX, comboY);
+      ctx.restore();
+      
+      ctx.fillStyle = '#888';
+      ctx.font = '12px monospace';
+      ctx.fillText(`+${Math.floor((player.meleeComboMultiplier - 1) * 100)}% DMG`, 220, this.height - 50);
+    }
+    
+    // Block stamina bar (only show if have melee weapon)
+    if (player.getCurrentMeleeWeapon()) {
+      const staminaBarWidth = 150;
+      const staminaBarHeight = 8;
+      const staminaX = 220;
+      const staminaY = this.height - 40;
+      
+      ctx.fillStyle = '#00ff00';
+      ctx.font = '12px monospace';
+      ctx.fillText('BLOCK [V]', staminaX, staminaY - 3);
+      
+      // Stamina bar background
+      ctx.fillStyle = '#330000';
+      ctx.fillRect(staminaX, staminaY + 2, staminaBarWidth, staminaBarHeight);
+      
+      // Stamina bar fill
+      const staminaPercent = player.blockStamina / player.maxBlockStamina;
+      if (player.isBlocking) {
+        ctx.fillStyle = '#ffaa00';
+      } else if (staminaPercent > 0.5) {
+        ctx.fillStyle = '#00ff00';
+      } else if (staminaPercent > 0.25) {
+        ctx.fillStyle = '#ffff00';
+      } else {
+        ctx.fillStyle = '#ff6600';
+      }
+      ctx.fillRect(staminaX, staminaY + 2, staminaBarWidth * staminaPercent, staminaBarHeight);
+      
+      ctx.strokeStyle = player.isBlocking ? '#ffaa00' : '#00ff00';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(staminaX, staminaY + 2, staminaBarWidth, staminaBarHeight);
+    }
+    
     // FPS counter
     if (window.game && window.game.showFPS) {
       ctx.fillStyle = '#ffff00';
@@ -348,18 +400,20 @@ class GameUI {
         ['MOVEMENT', '#ffff00'],
         ['WASD/Arrows - Move', '#00ff00'],
         ['Space - Jump', '#00ff00'],
-        ['Shift - Dodge Roll', '#00ff00'],
+        ['C/Ctrl - Dodge Roll', '#00ff00'],
         ['', ''],
         ['COMBAT', '#ffff00'],
         ['Mouse - Aim & Shoot', '#00ff00'],
+        ['F/RClick - Melee Attack', '#00ff00'],
+        ['V - Block/Parry', '#00ff00'],
         ['R - Reload', '#00ff00'],
         ['E/Q - Special Ability', '#00ff00'],
-        ['1-4 - Switch Weapons', '#00ff00'],
+        ['I - Inventory (TAB=switch)', '#00ff00'],
         ['', ''],
         ['TIPS', '#ffff00'],
-        ['• Kill enemies to drop power-ups', '#888'],
+        ['• Find melee weapons for combos', '#888'],
+        ['• Perfect parry deflects projectiles', '#888'],
         ['• Chain kills for combo bonuses', '#888'],
-        ['• Bosses spawn every 5 waves', '#888'],
         ['• Each character has unique abilities', '#888'],
         ['• Check minimap for enemies & items', '#888'],
       ];
@@ -691,19 +745,25 @@ class GameUI {
         '  A/D or Arrow Keys - Move Left/Right',
         '  W/Space - Jump',
         '  S - Crouch',
-        '  C/Ctrl - Slide',
+        '  C/Ctrl - Dodge Roll',
         '',
         'COMBAT:',
         '  Mouse - Aim',
         '  Left Click - Shoot (Ranged)',
         '  Right Click/F - Melee Attack',
+        '  V - Block/Parry (Melee)',
         '  R - Reload',
         '  E/Q - Special Ability',
         '  1/2/3/4 - Switch Weapons',
         '',
+        'INVENTORY:',
+        '  I - Open Inventory',
+        '  TAB - Switch Pages (Ranged/Melee)',
+        '',
         'GAME:',
         '  ESC - Pause/Menu',
-        '  M - Return to Main Menu'
+        '  M - Return to Main Menu',
+        '  H - Toggle Help'
       ];
       
       const startX = 250;

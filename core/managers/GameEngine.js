@@ -1235,6 +1235,13 @@ class GameEngine {
           this.player.onGround = false;
         }
         
+        // Block/Parry (Hold V key - only with melee weapon)
+        if (this.inputManager.isKeyPressed('v') || this.inputManager.isKeyPressed('V')) {
+          this.player.startBlocking(this.currentTime);
+        } else {
+          this.player.stopBlocking();
+        }
+        
         // Slide/Roll (changed from Shift to C key for better accessibility)
         if (this.inputManager.isKeyPressed('c') || this.inputManager.isKeyPressed('C') || this.inputManager.isKeyPressed('Control')) {
           this.player.roll(this.currentTime);
@@ -1881,22 +1888,50 @@ class GameEngine {
       // Enemy projectiles hitting player
       else {
         if (this.player.active && proj.collidesWith(this.player)) {
-          const damaged = this.player.takeDamage(proj.damage);
-          if (damaged) {
-            this.totalDamageTaken += proj.damage;
-            this.damageTakenThisWave += proj.damage;
-            // Play player hit sound
-            this.audioManager.playSound('player_hit', 0.5);
+          const damaged = this.player.takeDamage(proj.damage, this.currentTime);
+          
+          if (damaged === 'parry') {
+            // Perfect parry! Deflect projectile
+            proj.dx *= -1;
+            proj.dy *= -1;
+            proj.owner = this.player; // Now it belongs to player
+            this.audioManager.playSound('melee_hit', 0.8);
+            this.particleSystem.createTextPopup(
+              this.player.x + this.player.width / 2,
+              this.player.y - 20,
+              'PARRY!',
+              '#ffaa00'
+            );
+            this.camera.shake(3, 100);
+          } else if (damaged) {
+            const actualDamage = this.player.isBlocking ? Math.floor(proj.damage * 0.25) : proj.damage;
+            this.totalDamageTaken += actualDamage;
+            this.damageTakenThisWave += actualDamage;
+            
+            if (this.player.isBlocking) {
+              // Blocked hit
+              this.audioManager.playSound('player_hit', 0.3);
+              this.particleSystem.createTextPopup(
+                this.player.x + this.player.width / 2,
+                this.player.y - 20,
+                'BLOCKED',
+                '#00ffff'
+              );
+            } else {
+              // Normal hit
+              this.audioManager.playSound('player_hit', 0.5);
+            }
+            
+            proj.destroy();
+            this.particleSystem.createExplosion(
+              this.player.x + this.player.width / 2,
+              this.player.y + this.player.height / 2,
+              10,
+              '#ff0000'
+            );
+            // Screen shake when player takes damage (less if blocking)
+            this.camera.shake(this.player.isBlocking ? 2 : 5, 200);
           }
-          proj.destroy();
-          this.particleSystem.createExplosion(
-            this.player.x + this.player.width / 2,
-            this.player.y + this.player.height / 2,
-            10,
-            '#ff0000'
-          );
-          // Screen shake when player takes damage
-          this.camera.shake(5, 200);
         }
       }
     });
