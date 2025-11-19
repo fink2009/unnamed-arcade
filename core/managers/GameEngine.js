@@ -1153,6 +1153,11 @@ class GameEngine {
           const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime, true);
           
           if (result) {
+            // Create melee slash visual effect
+            const slashX = this.player.x + this.player.width / 2 + (this.player.facing * 30);
+            const slashY = this.player.y + this.player.height / 2;
+            this.particleSystem.createMeleeSlash(slashX, slashY, this.player.facing);
+            
             // Play melee sound
             this.audioManager.playSound('melee', 0.6);
             
@@ -1646,6 +1651,7 @@ class GameEngine {
             pickup.apply(this.player);
             this.score += 50;
             this.audioManager.playSound('pickup_weapon', 0.6);
+            this.particleSystem.createTextPopup(pickup.x, pickup.y - 10, `+${pickup.weapon.name}`, '#ffaa00');
           }
           // Check if player already has 4 ranged weapons (max capacity)
           else if (this.player.rangedWeapons.length >= 4) {
@@ -1663,22 +1669,27 @@ class GameEngine {
             pickup.apply(this.player);
             this.score += 50;
             this.audioManager.playSound('pickup_weapon', 0.6);
+            this.particleSystem.createTextPopup(pickup.x, pickup.y - 10, `+${pickup.weapon.name}`, '#00ff00');
           }
         } else if (pickup.pickupType === 'health' || pickup.pickupType === 'healing') {
           // Health pickups
           pickup.apply(this.player);
           this.score += 50;
           this.audioManager.playSound('pickup_health', 0.6);
+          this.particleSystem.createTextPopup(pickup.x, pickup.y - 10, '+HEALTH', '#00ff00');
         } else if (pickup.pickupType === 'ammo') {
           // Ammo pickups
           pickup.apply(this.player);
           this.score += 50;
           this.audioManager.playSound('pickup_ammo', 0.6);
+          this.particleSystem.createTextPopup(pickup.x, pickup.y - 10, '+AMMO', '#ffff00');
         } else if (pickup.pickupType && pickup.pickupType.startsWith('powerup_')) {
           // Power-up pickups
           pickup.apply(this.player);
           this.score += 50;
           this.audioManager.playSound('pickup_powerup', 0.7);
+          const powerupName = pickup.pickupType.replace('powerup_', '').toUpperCase();
+          this.particleSystem.createTextPopup(pickup.x, pickup.y - 10, `+${powerupName}`, '#ff00ff');
         } else {
           // Generic pickups
           pickup.apply(this.player);
@@ -1698,6 +1709,14 @@ class GameEngine {
           if (enemy.active && proj.active && proj.collidesWith(enemy)) {
             const killed = enemy.takeDamage(proj.damage);
             proj.destroy();
+            
+            // Show damage number
+            this.particleSystem.createTextPopup(
+              enemy.x + enemy.width / 2, 
+              enemy.y, 
+              `-${Math.floor(proj.damage)}`,
+              proj.owner && proj.owner.isMelee ? '#ffaa00' : '#ff4444'
+            );
             
             // Play hit sound - explosive projectiles get explosion sound
             if (proj.isExplosive) {

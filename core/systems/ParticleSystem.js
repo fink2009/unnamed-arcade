@@ -137,6 +137,24 @@ class ParticleSystem {
     });
   }
   
+  createMeleeSlash(x, y, direction) {
+    // Create a quick slash effect for melee attacks
+    const slashParticles = 8;
+    const angleOffset = direction > 0 ? 0 : Math.PI; // Face left or right
+    
+    for (let i = 0; i < slashParticles; i++) {
+      const angle = angleOffset + (Math.PI / 4) * (i / slashParticles - 0.5);
+      const speed = 8 + Math.random() * 4;
+      const dx = Math.cos(angle) * speed;
+      const dy = Math.sin(angle) * speed;
+      const lifetime = 150 + Math.random() * 100;
+      
+      const particle = new Particle(x, y, dx, dy, '#ffffff', lifetime);
+      particle.size = 4 + Math.random() * 3;
+      this.particles.push(particle);
+    }
+  }
+  
   createBombDrop(x, y, targetY, delay = 0) {
     // Create a bomb that drops from top of screen
     setTimeout(() => {

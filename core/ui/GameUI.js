@@ -75,9 +75,31 @@ class GameUI {
     if (weapon.isReloading) {
       ctx.fillStyle = '#ff0000';
       ctx.fillText('RELOADING...', this.width - 150, this.height - 15);
+    } else if (weapon.isMelee) {
+      ctx.fillStyle = '#00ffff';
+      ctx.fillText('MELEE', this.width - 150, this.height - 15);
     } else {
-      ctx.fillStyle = weapon.currentAmmo === 0 ? '#ff0000' : '#ffff00';
+      // Color code ammo: red if empty, orange if low, yellow if normal
+      const ammoPercent = weapon.currentAmmo / weapon.ammoCapacity;
+      if (weapon.currentAmmo === 0) {
+        ctx.fillStyle = '#ff0000';
+      } else if (ammoPercent < 0.25) {
+        ctx.fillStyle = '#ff6600';
+      } else {
+        ctx.fillStyle = '#ffff00';
+      }
       ctx.fillText(`${weapon.currentAmmo}/${weapon.ammoCapacity}`, this.width - 150, this.height - 15);
+      
+      // Low ammo warning
+      if (ammoPercent < 0.25 && weapon.currentAmmo > 0) {
+        const blink = Math.floor(Date.now() / 500) % 2 === 0;
+        if (blink) {
+          ctx.fillStyle = '#ff6600';
+          ctx.font = '12px monospace';
+          ctx.fillText('LOW AMMO!', this.width - 150, this.height - 2);
+          ctx.font = 'bold 16px monospace';
+        }
+      }
     }
     
     // Score and level info
