@@ -308,6 +308,11 @@ class EnemyUnit extends Entity {
     // Update weapon
     this.weapon.update(currentTime);
     
+    // Automatic reload for enemies when out of ammo
+    if (this.weapon.currentAmmo === 0 && !this.weapon.isReloading) {
+      this.weapon.reload(currentTime);
+    }
+    
     // Boss-specific mechanics
     if (this.isBoss && player) {
       this.updateBossMechanics(currentTime, player, deltaTime);
