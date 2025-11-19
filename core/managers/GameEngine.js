@@ -1196,18 +1196,19 @@ class GameEngine {
               
               // Play melee sound
               this.audioManager.playSound('melee', 0.6);
-            
-            // Track shots fired
-            if (Array.isArray(result)) {
-              this.shotsFired += result.length;
-              result.forEach(p => {
-                this.projectiles.push(p);
-                this.collisionSystem.add(p);
-              });
-            } else {
-              this.shotsFired++;
-              this.projectiles.push(result);
-              this.collisionSystem.add(result);
+              
+              // Track shots fired
+              if (Array.isArray(result)) {
+                this.shotsFired += result.length;
+                result.forEach(p => {
+                  this.projectiles.push(p);
+                  this.collisionSystem.add(p);
+                });
+              } else {
+                this.shotsFired++;
+                this.projectiles.push(result);
+                this.collisionSystem.add(result);
+              }
             }
           }
         }
