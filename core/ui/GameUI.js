@@ -1035,7 +1035,7 @@ class GameUI {
     ctx.restore();
   }
   
-  drawInventory(ctx, player) {
+  drawInventory(ctx, player, inventoryPage = 0) {
     ctx.save();
     
     // Semi-transparent background overlay
@@ -1044,7 +1044,7 @@ class GameUI {
     
     // Inventory panel
     const panelWidth = 700;
-    const panelHeight = 450;
+    const panelHeight = 500;
     const panelX = (this.width - panelWidth) / 2;
     const panelY = (this.height - panelHeight) / 2;
     
@@ -1068,73 +1068,164 @@ class GameUI {
     ctx.textAlign = 'center';
     ctx.fillText('INVENTORY', this.width / 2, panelY + 45);
     
-    // Subtitle
-    ctx.fillStyle = '#00ff00';
-    ctx.font = '16px monospace';
-    ctx.fillText('YOUR WEAPONS', this.width / 2, panelY + 75);
+    // Page tabs
+    const tabY = panelY + 80;
+    const tabWidth = 150;
+    const tabHeight = 35;
+    const tabSpacing = 10;
+    const tab1X = this.width / 2 - tabWidth - tabSpacing / 2;
+    const tab2X = this.width / 2 + tabSpacing / 2;
+    
+    // Draw Tab 1 - Ranged Weapons
+    if (inventoryPage === 0) {
+      ctx.fillStyle = '#2a4a6a';
+      ctx.fillRect(tab1X, tabY, tabWidth, tabHeight);
+      ctx.strokeStyle = '#4a6a8a';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(tab1X, tabY, tabWidth, tabHeight);
+      ctx.fillStyle = '#00ff00';
+    } else {
+      ctx.fillStyle = '#1a2a3a';
+      ctx.fillRect(tab1X, tabY, tabWidth, tabHeight);
+      ctx.strokeStyle = '#2a4a6a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(tab1X, tabY, tabWidth, tabHeight);
+      ctx.fillStyle = '#888888';
+    }
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText('RANGED [TAB]', tab1X + tabWidth / 2, tabY + 22);
+    
+    // Draw Tab 2 - Melee Weapons
+    if (inventoryPage === 1) {
+      ctx.fillStyle = '#2a4a6a';
+      ctx.fillRect(tab2X, tabY, tabWidth, tabHeight);
+      ctx.strokeStyle = '#4a6a8a';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(tab2X, tabY, tabWidth, tabHeight);
+      ctx.fillStyle = '#00ff00';
+    } else {
+      ctx.fillStyle = '#1a2a3a';
+      ctx.fillRect(tab2X, tabY, tabWidth, tabHeight);
+      ctx.strokeStyle = '#2a4a6a';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(tab2X, tabY, tabWidth, tabHeight);
+      ctx.fillStyle = '#888888';
+    }
+    ctx.font = 'bold 14px monospace';
+    ctx.fillText('MELEE [TAB]', tab2X + tabWidth / 2, tabY + 22);
     
     // List weapons
-    const startY = panelY + 110;
+    const startY = panelY + 140;
     const spacing = 70;
     
-    // Get all player weapons (ranged + melee)
-    const allWeapons = [...player.rangedWeapons];
-    if (player.meleeWeapon) {
-      allWeapons.push(player.meleeWeapon);
-    }
-    
     ctx.textAlign = 'left';
-    allWeapons.forEach((weapon, index) => {
-      const yPos = startY + index * spacing;
-      const isCurrentWeapon = index === player.currentRangedWeaponIndex && !weapon.isMelee;
-      
-      // Highlight current weapon
-      if (isCurrentWeapon) {
-        ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
-        ctx.fillRect(panelX + 20, yPos - 25, panelWidth - 40, 60);
-        ctx.strokeStyle = '#00ff00';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(panelX + 20, yPos - 25, panelWidth - 40, 60);
-      }
-      
-      // Weapon number
-      ctx.fillStyle = isCurrentWeapon ? '#ffff00' : '#00ff00';
-      ctx.font = 'bold 20px monospace';
-      ctx.fillText(`[${index + 1}]`, panelX + 40, yPos);
-      
-      // Weapon name
-      ctx.fillStyle = isCurrentWeapon ? '#00ffff' : '#ffffff';
-      ctx.font = 'bold 18px monospace';
-      ctx.fillText(weapon.name.toUpperCase(), panelX + 90, yPos);
-      
-      // Current weapon indicator
-      if (isCurrentWeapon) {
-        ctx.fillStyle = '#ffff00';
-        ctx.font = 'bold 14px monospace';
-        ctx.fillText('◄ EQUIPPED', panelX + 90 + ctx.measureText(weapon.name.toUpperCase()).width + 15, yPos);
-      }
-      
-      // Weapon stats
-      ctx.fillStyle = '#aaaaaa';
-      ctx.font = '14px monospace';
-      const ammoText = weapon.currentAmmo === 999 ? 'INFINITE' : `${weapon.currentAmmo}/${weapon.ammoCapacity}`;
-      const meleeTag = weapon.isMelee ? ' [MELEE]' : '';
-      ctx.fillText(`DMG: ${weapon.damage} | RATE: ${weapon.fireRate}ms | AMMO: ${ammoText}${meleeTag}`, 
-                   panelX + 90, yPos + 22);
-      
-      // Reload status
-      if (weapon.isReloading) {
-        ctx.fillStyle = '#ff6600';
-        ctx.font = '12px monospace';
-        ctx.fillText('RELOADING...', panelX + 550, yPos + 22);
-      }
-    });
     
-    // Instructions
-    ctx.fillStyle = '#888888';
-    ctx.font = '16px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('Press [1-4] to equip weapon | [I] or [ESC] to close', this.width / 2, panelY + panelHeight - 30);
+    if (inventoryPage === 0) {
+      // Page 1: Ranged Weapons
+      player.rangedWeapons.forEach((weapon, index) => {
+        const yPos = startY + index * spacing;
+        const isCurrentWeapon = index === player.currentRangedWeaponIndex;
+        
+        // Highlight current weapon
+        if (isCurrentWeapon) {
+          ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+          ctx.fillRect(panelX + 20, yPos - 25, panelWidth - 40, 60);
+          ctx.strokeStyle = '#00ff00';
+          ctx.lineWidth = 2;
+          ctx.strokeRect(panelX + 20, yPos - 25, panelWidth - 40, 60);
+        }
+        
+        // Weapon number
+        ctx.fillStyle = isCurrentWeapon ? '#ffff00' : '#00ff00';
+        ctx.font = 'bold 20px monospace';
+        ctx.fillText(`[${index + 1}]`, panelX + 40, yPos);
+        
+        // Weapon name
+        ctx.fillStyle = isCurrentWeapon ? '#00ffff' : '#ffffff';
+        ctx.font = 'bold 18px monospace';
+        ctx.fillText(weapon.name.toUpperCase(), panelX + 90, yPos);
+        
+        // Current weapon indicator
+        if (isCurrentWeapon) {
+          ctx.fillStyle = '#ffff00';
+          ctx.font = 'bold 14px monospace';
+          ctx.fillText('◄ EQUIPPED', panelX + 90 + ctx.measureText(weapon.name.toUpperCase()).width + 15, yPos);
+        }
+        
+        // Weapon stats
+        ctx.fillStyle = '#aaaaaa';
+        ctx.font = '14px monospace';
+        const ammoText = weapon.currentAmmo === 999 ? 'INFINITE' : `${weapon.currentAmmo}/${weapon.ammoCapacity}`;
+        ctx.fillText(`DMG: ${weapon.damage} | RATE: ${weapon.fireRate}ms | AMMO: ${ammoText}`, 
+                     panelX + 90, yPos + 22);
+        
+        // Reload status
+        if (weapon.isReloading) {
+          ctx.fillStyle = '#ff6600';
+          ctx.font = '12px monospace';
+          ctx.fillText('RELOADING...', panelX + 550, yPos + 22);
+        }
+      });
+      
+      // Instructions for ranged weapons
+      ctx.fillStyle = '#888888';
+      ctx.font = '16px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('Press [1-4] to equip weapon | [TAB] to switch page | [I] or [ESC] to close', this.width / 2, panelY + panelHeight - 30);
+    } else {
+      // Page 2: Melee Weapons
+      if (player.meleeWeapons.length === 0) {
+        ctx.fillStyle = '#888888';
+        ctx.font = '18px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('No melee weapons found', this.width / 2, startY + 50);
+        ctx.font = '14px monospace';
+        ctx.fillText('Find weapon pickups in the game to collect melee weapons', this.width / 2, startY + 80);
+      } else {
+        player.meleeWeapons.forEach((weapon, index) => {
+          const yPos = startY + index * spacing;
+          const isCurrentWeapon = index === player.currentMeleeWeaponIndex;
+          
+          // Highlight current weapon
+          if (isCurrentWeapon) {
+            ctx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+            ctx.fillRect(panelX + 20, yPos - 25, panelWidth - 40, 60);
+            ctx.strokeStyle = '#00ff00';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(panelX + 20, yPos - 25, panelWidth - 40, 60);
+          }
+          
+          // Weapon number
+          ctx.fillStyle = isCurrentWeapon ? '#ffff00' : '#00ff00';
+          ctx.font = 'bold 20px monospace';
+          ctx.fillText(`[${index + 1}]`, panelX + 40, yPos);
+          
+          // Weapon name
+          ctx.fillStyle = isCurrentWeapon ? '#00ffff' : '#ffffff';
+          ctx.font = 'bold 18px monospace';
+          ctx.fillText(weapon.name.toUpperCase(), panelX + 90, yPos);
+          
+          // Current weapon indicator
+          if (isCurrentWeapon) {
+            ctx.fillStyle = '#ffff00';
+            ctx.font = 'bold 14px monospace';
+            ctx.fillText('◄ EQUIPPED', panelX + 90 + ctx.measureText(weapon.name.toUpperCase()).width + 15, yPos);
+          }
+          
+          // Weapon stats
+          ctx.fillStyle = '#aaaaaa';
+          ctx.font = '14px monospace';
+          ctx.fillText(`DMG: ${weapon.damage} | RATE: ${weapon.fireRate}ms | RANGE: ${weapon.meleeRange} [MELEE]`, 
+                       panelX + 90, yPos + 22);
+        });
+      }
+      
+      // Instructions for melee weapons
+      ctx.fillStyle = '#888888';
+      ctx.font = '16px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('Press [1-4] to equip melee weapon | [TAB] to switch page | [I] or [ESC] to close', this.width / 2, panelY + panelHeight - 30);
+    }
     
     ctx.textAlign = 'left';
     ctx.restore();

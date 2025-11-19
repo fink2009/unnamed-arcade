@@ -23,7 +23,8 @@ class PlayerCharacter extends Entity {
     // Combat - separate ranged and melee weapons
     this.rangedWeapons = [new Pistol()];
     this.currentRangedWeaponIndex = 0;
-    this.meleeWeapon = new Knife(); // Default melee weapon - always available
+    this.meleeWeapons = []; // Array of melee weapons
+    this.currentMeleeWeaponIndex = -1; // -1 means no melee weapon equipped
     this.score = 0;
     this.kills = 0;
     
@@ -86,16 +87,35 @@ class PlayerCharacter extends Entity {
     return this.rangedWeapons[this.currentRangedWeaponIndex];
   }
 
+  getCurrentMeleeWeapon() {
+    if (this.currentMeleeWeaponIndex >= 0 && this.currentMeleeWeaponIndex < this.meleeWeapons.length) {
+      return this.meleeWeapons[this.currentMeleeWeaponIndex];
+    }
+    return null;
+  }
+
   switchWeapon(index) {
     if (index >= 0 && index < this.rangedWeapons.length) {
       this.currentRangedWeaponIndex = index;
     }
   }
 
+  switchMeleeWeapon(index) {
+    if (index >= 0 && index < this.meleeWeapons.length) {
+      this.currentMeleeWeaponIndex = index;
+    }
+  }
+
   addWeapon(weapon) {
     if (weapon.isMelee) {
-      // Replace melee weapon
-      this.meleeWeapon = weapon;
+      // Add to melee weapons if not already present
+      if (!this.meleeWeapons.find(w => w.name === weapon.name)) {
+        this.meleeWeapons.push(weapon);
+        // Auto-equip first melee weapon
+        if (this.meleeWeapons.length === 1) {
+          this.currentMeleeWeaponIndex = 0;
+        }
+      }
     } else {
       // Add to ranged weapons if not already present
       if (!this.rangedWeapons.find(w => w.name === weapon.name)) {
@@ -109,10 +129,10 @@ class PlayerCharacter extends Entity {
     
     if (isMeleeAttack) {
       // Use melee weapon if available
-      if (!this.meleeWeapon) {
+      weapon = this.getCurrentMeleeWeapon();
+      if (!weapon) {
         return null; // No melee weapon equipped
       }
-      weapon = this.meleeWeapon;
     } else {
       // Use current ranged weapon
       weapon = this.getCurrentWeapon();
@@ -300,8 +320,9 @@ class PlayerCharacter extends Entity {
     this.getCurrentWeapon().update(currentTime);
     
     // Update melee weapon if equipped
-    if (this.meleeWeapon) {
-      this.meleeWeapon.update(currentTime);
+    const currentMelee = this.getCurrentMeleeWeapon();
+    if (currentMelee) {
+      currentMelee.update(currentTime);
     }
     
     // Handle rolling
