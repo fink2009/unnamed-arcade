@@ -140,17 +140,13 @@ class ParticleSystem {
   createBombDrop(x, y, targetY, delay = 0) {
     // Create a bomb that drops from top of screen
     setTimeout(() => {
-      const bomb = {
-        x: x,
-        y: y,
-        targetY: targetY,
-        dy: 0,
-        gravity: 0.5,
-        active: true,
-        isBomb: true,
-        rotation: 0,
-        rotationSpeed: 0.2
-      };
+      const bomb = new Particle(x, y, 0, 0, '#333333', 10000); // Long lifetime
+      bomb.isBomb = true;
+      bomb.targetY = targetY;
+      bomb.dy = 0;
+      bomb.gravity = 0.5;
+      bomb.rotation = 0;
+      bomb.rotationSpeed = 0.2;
       this.particles.push(bomb);
     }, delay);
   }

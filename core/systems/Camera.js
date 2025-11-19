@@ -26,6 +26,11 @@ class Camera {
   }
 
   update() {
+    // Don't update camera if game is not in playing state
+    if (window.game && window.game.state !== 'playing') {
+      return;
+    }
+    
     if (this.following) {
       // Get smoothness from game settings
       const smoothness = window.game ? window.game.cameraSmoothness : 0.1;
