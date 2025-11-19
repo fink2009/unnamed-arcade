@@ -130,7 +130,7 @@ class EnemyUnit extends Entity {
   }
 
   updateAI(player, currentTime, deltaTime) {
-    if (!player || !player.active) return;
+    if (!player || !player.active) return null;
     
     const distToPlayer = this.distanceTo(player);
     this.target = player;
@@ -142,7 +142,8 @@ class EnemyUnit extends Entity {
     if (this.isBoss) {
       // Bosses always attack - no distance checks
       this.changeState(AIState.ATTACK, currentTime);
-      return; // Skip normal AI logic for bosses
+      // Return projectiles from attack for bosses
+      return this.attack(player, currentTime);
     }
     
     switch (this.aiState) {
@@ -167,7 +168,7 @@ class EnemyUnit extends Entity {
         break;
         
       case AIState.ATTACK:
-        this.attack(player, currentTime);
+        const attackResult = this.attack(player, currentTime);
         if (distToPlayer > this.attackRange * 1.2) {
           this.changeState(AIState.CHASE, currentTime);
         }
@@ -175,7 +176,7 @@ class EnemyUnit extends Entity {
         if (this.stateTimer > 2000 && Math.random() < 0.2) {
           this.changeState(AIState.HIDE, currentTime);
         }
-        break;
+        return attackResult;
         
       case AIState.FLANK:
         this.flank(player);
@@ -198,6 +199,8 @@ class EnemyUnit extends Entity {
         }
         break;
     }
+    
+    return null; // No projectiles for other states
   }
 
   changeState(newState, currentTime) {
@@ -314,8 +317,8 @@ class EnemyUnit extends Entity {
     if (this.patrolMin < 0) this.patrolMin = 0;
     if (this.patrolMax > worldWidth) this.patrolMax = worldWidth;
     
-    // AI decision making
-    this.updateAI(player, currentTime, deltaTime);
+    // AI decision making - capture projectiles
+    const aiProjectiles = this.updateAI(player, currentTime, deltaTime);
     
     // Apply movement
     this.x += this.dx * dt;
@@ -342,6 +345,9 @@ class EnemyUnit extends Entity {
       this.y = groundLevel - this.height;
       this.dy = 0;
     }
+    
+    // Return projectiles from AI
+    return aiProjectiles;
   }
   
   updateBossMechanics(currentTime, player, deltaTime) {

@@ -23,7 +23,7 @@ class PlayerCharacter extends Entity {
     // Combat - separate ranged and melee weapons
     this.rangedWeapons = [new Pistol()];
     this.currentRangedWeaponIndex = 0;
-    this.meleeWeapon = null; // No melee weapon by default
+    this.meleeWeapon = new Knife(); // Default melee weapon - always available
     this.score = 0;
     this.kills = 0;
     

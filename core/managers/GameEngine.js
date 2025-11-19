@@ -1346,10 +1346,19 @@ class GameEngine {
     
     // Update enemies
     this.enemies.forEach(enemy => {
-      enemy.update(deltaTime, this.player, this.groundLevel, this.currentTime, this.worldWidth);
+      // enemy.update now returns projectiles from AI (especially for bosses)
+      const aiProjectiles = enemy.update(deltaTime, this.player, this.groundLevel, this.currentTime, this.worldWidth);
       
-      // Enemy shooting
-      const result = enemy.attack(this.player, this.currentTime);
+      // Enemy shooting - bosses shoot via their AI, non-bosses need explicit attack call
+      let result = null;
+      if (!enemy.isBoss) {
+        // Non-boss enemies still use the old attack pattern
+        result = enemy.attack(this.player, this.currentTime);
+      } else {
+        // Boss projectiles come from their AI update
+        result = aiProjectiles;
+      }
+      
       if (result) {
         if (Array.isArray(result)) {
           result.forEach(p => {

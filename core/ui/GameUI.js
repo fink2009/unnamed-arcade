@@ -86,24 +86,7 @@ class GameUI {
     ctx.fillStyle = '#ffff00';
     ctx.fillText(`KILLS: ${gameState.kills}`, this.width - 150, 40);
     
-    // Mode and level/wave
-    if (gameState.mode === 'campaign') {
-      ctx.fillStyle = '#00aaff';
-      ctx.fillText(`LEVEL: ${window.game ? window.game.currentLevel : 1}/${window.game ? window.game.maxLevel : 10}`, 240, 20);
-      if (window.game && window.game.currentLevelName) {
-        ctx.fillStyle = '#aaaaaa';
-        ctx.font = '12px monospace';
-        ctx.fillText(window.game.currentLevelName, 240, 35);
-        ctx.font = 'bold 16px monospace';
-      }
-    } else if (gameState.mode === 'survival') {
-      ctx.fillStyle = '#00aaff';
-      ctx.fillText(`WAVE: ${gameState.wave}`, 240, 20);
-    }
-    
-    // Enemy count
-    ctx.fillStyle = '#ff6600';
-    ctx.fillText(`ENEMIES: ${gameState.enemiesRemaining}`, 240, 40);
+    // Mode and level/wave - removed duplicate, kept only in section below
     
     // Combo display
     if (gameState.combo > 1) {
@@ -162,14 +145,7 @@ class GameUI {
       ctx.strokeRect(220, this.height - 25, abilityBarWidth, abilityBarHeight);
     }
     
-    // Combo indicator
-    if (gameState.combo > 1) {
-      ctx.fillStyle = '#ff6600';
-      ctx.font = 'bold 18px monospace';
-      ctx.fillText(`${gameState.combo}X COMBO!`, this.width / 2 - 60, 50);
-    }
-    
-    // Wave/Level info
+    // Wave/Level info (consolidated from duplicate above)
     if (gameState.mode === 'survival') {
       ctx.fillStyle = '#00ff00';
       ctx.fillText(`WAVE: ${gameState.wave}`, this.width / 2 - 50, 20);
@@ -993,9 +969,15 @@ class GameUI {
     const startY = popupY + 170;
     const spacing = 50;
     
-    player.weapons.forEach((weapon, index) => {
+    // Get all player weapons (ranged + melee)
+    const allWeapons = [...player.rangedWeapons];
+    if (player.meleeWeapon) {
+      allWeapons.push(player.meleeWeapon);
+    }
+    
+    allWeapons.forEach((weapon, index) => {
       const yPos = startY + index * spacing;
-      const isCurrentWeapon = index === player.currentWeaponIndex;
+      const isCurrentWeapon = index === player.currentRangedWeaponIndex && !weapon.isMelee;
       
       // Highlight current weapon
       if (isCurrentWeapon) {
@@ -1016,7 +998,8 @@ class GameUI {
       // Weapon stats
       ctx.fillStyle = '#aaaaaa';
       ctx.font = '14px monospace';
-      ctx.fillText(`DMG: ${weapon.damage} | RATE: ${weapon.fireRate}ms | AMMO: ${weapon.ammoCapacity}`, 
+      const meleeTag = weapon.isMelee ? ' [MELEE]' : '';
+      ctx.fillText(`DMG: ${weapon.damage} | RATE: ${weapon.fireRate}ms | AMMO: ${weapon.ammoCapacity}${meleeTag}`, 
                    popupX + 300, yPos);
     });
     
@@ -1072,10 +1055,16 @@ class GameUI {
     const startY = panelY + 110;
     const spacing = 70;
     
+    // Get all player weapons (ranged + melee)
+    const allWeapons = [...player.rangedWeapons];
+    if (player.meleeWeapon) {
+      allWeapons.push(player.meleeWeapon);
+    }
+    
     ctx.textAlign = 'left';
-    player.weapons.forEach((weapon, index) => {
+    allWeapons.forEach((weapon, index) => {
       const yPos = startY + index * spacing;
-      const isCurrentWeapon = index === player.currentWeaponIndex;
+      const isCurrentWeapon = index === player.currentRangedWeaponIndex && !weapon.isMelee;
       
       // Highlight current weapon
       if (isCurrentWeapon) {
