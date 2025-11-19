@@ -764,63 +764,187 @@ class AudioManager {
   }
   
   playMenuMusic() {
-    // Simple ambient menu music
+    // Ambient menu music with chord progression and melody
     const ctx = this.audioContext;
-    const startTime = ctx.currentTime;
     
-    // Create a simple chord progression loop
-    this.createMusicLoop([
-      { freq: 220, time: 0, duration: 1 },
-      { freq: 165, time: 1, duration: 1 },
-      { freq: 196, time: 2, duration: 1 },
-      { freq: 147, time: 3, duration: 1 }
-    ], 4);
+    // Bass line (root notes of chord progression: Am - F - C - G)
+    const bassNotes = [
+      { freq: 110, time: 0, duration: 1 },      // A
+      { freq: 87.31, time: 1, duration: 1 },    // F
+      { freq: 130.81, time: 2, duration: 1 },   // C
+      { freq: 98, time: 3, duration: 1 }        // G
+    ];
+    
+    // Melody notes (played on top)
+    const melodyNotes = [
+      { freq: 440, time: 0, duration: 0.5 },    // A
+      { freq: 523.25, time: 0.5, duration: 0.5 }, // C
+      { freq: 349.23, time: 1, duration: 0.5 },   // F
+      { freq: 440, time: 1.5, duration: 0.5 },    // A
+      { freq: 523.25, time: 2, duration: 0.5 },   // C
+      { freq: 587.33, time: 2.5, duration: 0.5 }, // D
+      { freq: 392, time: 3, duration: 0.5 },      // G
+      { freq: 493.88, time: 3.5, duration: 0.5 }  // B
+    ];
+    
+    // Create bass loop
+    this.createMusicLoop(bassNotes, 4, 'square', 0.12);
+    
+    // Create melody loop (slightly delayed for depth)
+    setTimeout(() => {
+      if (this.currentMusic === 'menu') {
+        this.createMusicLoop(melodyNotes, 4, 'sine', 0.08);
+      }
+    }, 50);
   }
   
   playGameplayMusic() {
-    // Energetic gameplay music
+    // Energetic gameplay music - fast-paced action theme
     const ctx = this.audioContext;
     
-    this.createMusicLoop([
-      { freq: 330, time: 0, duration: 0.5 },
-      { freq: 440, time: 0.5, duration: 0.5 },
-      { freq: 330, time: 1, duration: 0.5 },
-      { freq: 294, time: 1.5, duration: 0.5 },
-      { freq: 330, time: 2, duration: 0.5 },
-      { freq: 440, time: 2.5, duration: 0.5 },
-      { freq: 330, time: 3, duration: 0.5 },
-      { freq: 294, time: 3.5, duration: 0.5 }
-    ], 4);
+    // Driving bass line
+    const bassNotes = [
+      { freq: 164.81, time: 0, duration: 0.25 },    // E
+      { freq: 164.81, time: 0.25, duration: 0.25 }, // E
+      { freq: 164.81, time: 0.5, duration: 0.25 },  // E
+      { freq: 196, time: 0.75, duration: 0.25 },    // G
+      { freq: 164.81, time: 1, duration: 0.25 },    // E
+      { freq: 164.81, time: 1.25, duration: 0.25 }, // E
+      { freq: 146.83, time: 1.5, duration: 0.25 },  // D
+      { freq: 164.81, time: 1.75, duration: 0.25 }  // E
+    ];
+    
+    // Energetic melody
+    const melodyNotes = [
+      { freq: 659.25, time: 0, duration: 0.25 },    // E
+      { freq: 783.99, time: 0.25, duration: 0.25 }, // G
+      { freq: 659.25, time: 0.5, duration: 0.25 },  // E
+      { freq: 587.33, time: 0.75, duration: 0.25 }, // D
+      { freq: 659.25, time: 1, duration: 0.25 },    // E
+      { freq: 783.99, time: 1.25, duration: 0.25 }, // G
+      { freq: 880, time: 1.5, duration: 0.25 },     // A
+      { freq: 783.99, time: 1.75, duration: 0.25 }  // G
+    ];
+    
+    // Harmony notes
+    const harmonyNotes = [
+      { freq: 523.25, time: 0, duration: 0.5 },     // C
+      { freq: 493.88, time: 0.5, duration: 0.5 },   // B
+      { freq: 523.25, time: 1, duration: 0.5 },     // C
+      { freq: 587.33, time: 1.5, duration: 0.5 }    // D
+    ];
+    
+    // Create bass loop (square wave for punchier sound)
+    this.createMusicLoop(bassNotes, 2, 'square', 0.15);
+    
+    // Create melody loop
+    setTimeout(() => {
+      if (this.currentMusic === 'gameplay') {
+        this.createMusicLoop(melodyNotes, 2, 'square', 0.1);
+      }
+    }, 50);
+    
+    // Create harmony loop
+    setTimeout(() => {
+      if (this.currentMusic === 'gameplay') {
+        this.createMusicLoop(harmonyNotes, 2, 'triangle', 0.06);
+      }
+    }, 100);
   }
   
   playBossMusic() {
-    // Intense boss music
+    // Intense boss music - aggressive and dramatic
     const ctx = this.audioContext;
     
-    this.createMusicLoop([
-      { freq: 220, time: 0, duration: 0.25 },
-      { freq: 277, time: 0.25, duration: 0.25 },
-      { freq: 220, time: 0.5, duration: 0.25 },
-      { freq: 185, time: 0.75, duration: 0.25 },
-      { freq: 220, time: 1, duration: 0.25 },
-      { freq: 277, time: 1.25, duration: 0.25 },
-      { freq: 330, time: 1.5, duration: 0.5 }
-    ], 2);
+    // Heavy bass line (dark and threatening)
+    const bassNotes = [
+      { freq: 110, time: 0, duration: 0.2 },      // A
+      { freq: 110, time: 0.2, duration: 0.2 },    // A
+      { freq: 116.54, time: 0.4, duration: 0.2 }, // A#
+      { freq: 110, time: 0.6, duration: 0.2 },    // A
+      { freq: 98, time: 0.8, duration: 0.2 },     // G
+      { freq: 110, time: 1, duration: 0.2 },      // A
+      { freq: 110, time: 1.2, duration: 0.2 },    // A
+      { freq: 103.83, time: 1.4, duration: 0.2 }, // G#
+      { freq: 110, time: 1.6, duration: 0.2 },    // A
+      { freq: 116.54, time: 1.8, duration: 0.2 }  // A#
+    ];
+    
+    // Aggressive melody (high intensity)
+    const melodyNotes = [
+      { freq: 440, time: 0, duration: 0.15 },     // A
+      { freq: 554.37, time: 0.15, duration: 0.15 }, // C#
+      { freq: 440, time: 0.3, duration: 0.15 },   // A
+      { freq: 466.16, time: 0.45, duration: 0.15 }, // A#
+      { freq: 440, time: 0.6, duration: 0.15 },   // A
+      { freq: 392, time: 0.75, duration: 0.15 },  // G
+      { freq: 440, time: 0.9, duration: 0.2 },    // A
+      { freq: 554.37, time: 1.1, duration: 0.15 }, // C#
+      { freq: 587.33, time: 1.25, duration: 0.15 }, // D
+      { freq: 554.37, time: 1.4, duration: 0.15 }, // C#
+      { freq: 493.88, time: 1.55, duration: 0.15 }, // B
+      { freq: 440, time: 1.7, duration: 0.3 }     // A
+    ];
+    
+    // Power chord harmony
+    const harmonyNotes = [
+      { freq: 330, time: 0, duration: 0.4 },      // E (power chord)
+      { freq: 349.23, time: 0.4, duration: 0.4 }, // F
+      { freq: 293.66, time: 0.8, duration: 0.4 }, // D
+      { freq: 330, time: 1.2, duration: 0.4 },    // E
+      { freq: 349.23, time: 1.6, duration: 0.4 }  // F
+    ];
+    
+    // Create heavy bass loop
+    this.createMusicLoop(bassNotes, 2, 'sawtooth', 0.18);
+    
+    // Create aggressive melody loop
+    setTimeout(() => {
+      if (this.currentMusic === 'boss') {
+        this.createMusicLoop(melodyNotes, 2, 'square', 0.12);
+      }
+    }, 50);
+    
+    // Create power chord harmony
+    setTimeout(() => {
+      if (this.currentMusic === 'boss') {
+        this.createMusicLoop(harmonyNotes, 2, 'sawtooth', 0.08);
+      }
+    }, 100);
   }
   
   playVictoryMusic() {
-    // Victory fanfare
+    // Victory fanfare - triumphant and celebratory
     const ctx = this.audioContext;
     const startTime = ctx.currentTime;
     
-    const notes = [
-      { freq: 523, time: 0, duration: 0.3 },
-      { freq: 659, time: 0.3, duration: 0.3 },
-      { freq: 784, time: 0.6, duration: 0.3 },
-      { freq: 1047, time: 0.9, duration: 0.6 }
+    // Main fanfare melody
+    const mainMelody = [
+      { freq: 523.25, time: 0, duration: 0.25 },    // C
+      { freq: 523.25, time: 0.25, duration: 0.25 }, // C
+      { freq: 523.25, time: 0.5, duration: 0.25 },  // C
+      { freq: 659.25, time: 0.75, duration: 0.5 },  // E
+      { freq: 783.99, time: 1.25, duration: 0.25 }, // G
+      { freq: 1046.5, time: 1.5, duration: 0.75 }   // C (high)
     ];
     
-    notes.forEach(note => {
+    // Harmony notes
+    const harmony = [
+      { freq: 329.63, time: 0, duration: 0.75 },    // E
+      { freq: 392, time: 0.75, duration: 0.5 },     // G
+      { freq: 493.88, time: 1.25, duration: 0.25 }, // B
+      { freq: 659.25, time: 1.5, duration: 0.75 }   // E (high)
+    ];
+    
+    // Bass support
+    const bass = [
+      { freq: 130.81, time: 0, duration: 0.75 },  // C
+      { freq: 196, time: 0.75, duration: 0.5 },   // G
+      { freq: 261.63, time: 1.25, duration: 1 }   // C
+    ];
+    
+    // Play main melody
+    mainMelody.forEach(note => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       
@@ -831,27 +955,17 @@ class AudioManager {
       osc.frequency.value = note.freq;
       
       const time = startTime + note.time;
-      gain.gain.setValueAtTime(0.15, time);
+      gain.gain.setValueAtTime(0.18, time);
       gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
       
       osc.start(time);
       osc.stop(time + note.duration);
+      
+      this.musicOscillators.push(osc);
     });
-  }
-  
-  playGameOverMusic() {
-    // Sad game over music
-    const ctx = this.audioContext;
-    const startTime = ctx.currentTime;
     
-    const notes = [
-      { freq: 330, time: 0, duration: 0.4 },
-      { freq: 294, time: 0.4, duration: 0.4 },
-      { freq: 262, time: 0.8, duration: 0.4 },
-      { freq: 220, time: 1.2, duration: 0.8 }
-    ];
-    
-    notes.forEach(note => {
+    // Play harmony
+    harmony.forEach(note => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       
@@ -867,10 +981,127 @@ class AudioManager {
       
       osc.start(time);
       osc.stop(time + note.duration);
+      
+      this.musicOscillators.push(osc);
+    });
+    
+    // Play bass
+    bass.forEach(note => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(this.musicGainNode);
+      
+      osc.type = 'triangle';
+      osc.frequency.value = note.freq;
+      
+      const time = startTime + note.time;
+      gain.gain.setValueAtTime(0.15, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+      
+      osc.start(time);
+      osc.stop(time + note.duration);
+      
+      this.musicOscillators.push(osc);
     });
   }
   
-  createMusicLoop(notes, loopDuration) {
+  playGameOverMusic() {
+    // Sad game over music - descending progression
+    const ctx = this.audioContext;
+    const startTime = ctx.currentTime;
+    
+    // Descending melody (defeat theme)
+    const melody = [
+      { freq: 329.63, time: 0, duration: 0.4 },    // E
+      { freq: 293.66, time: 0.4, duration: 0.4 },  // D
+      { freq: 261.63, time: 0.8, duration: 0.4 },  // C
+      { freq: 246.94, time: 1.2, duration: 0.4 },  // B
+      { freq: 220, time: 1.6, duration: 0.8 }      // A
+    ];
+    
+    // Harmony notes (minor feel)
+    const harmony = [
+      { freq: 261.63, time: 0, duration: 0.4 },    // C
+      { freq: 246.94, time: 0.4, duration: 0.4 },  // B
+      { freq: 220, time: 0.8, duration: 0.4 },     // A
+      { freq: 196, time: 1.2, duration: 0.4 },     // G
+      { freq: 174.61, time: 1.6, duration: 0.8 }   // F
+    ];
+    
+    // Bass notes
+    const bass = [
+      { freq: 164.81, time: 0, duration: 0.8 },  // E
+      { freq: 130.81, time: 0.8, duration: 0.8 }, // C
+      { freq: 110, time: 1.6, duration: 0.8 }    // A
+    ];
+    
+    // Play melody
+    melody.forEach(note => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(this.musicGainNode);
+      
+      osc.type = 'sine';
+      osc.frequency.value = note.freq;
+      
+      const time = startTime + note.time;
+      gain.gain.setValueAtTime(0.14, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+      
+      osc.start(time);
+      osc.stop(time + note.duration);
+      
+      this.musicOscillators.push(osc);
+    });
+    
+    // Play harmony
+    harmony.forEach(note => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(this.musicGainNode);
+      
+      osc.type = 'triangle';
+      osc.frequency.value = note.freq;
+      
+      const time = startTime + note.time;
+      gain.gain.setValueAtTime(0.1, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+      
+      osc.start(time);
+      osc.stop(time + note.duration);
+      
+      this.musicOscillators.push(osc);
+    });
+    
+    // Play bass
+    bass.forEach(note => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      
+      osc.connect(gain);
+      gain.connect(this.musicGainNode);
+      
+      osc.type = 'triangle';
+      osc.frequency.value = note.freq;
+      
+      const time = startTime + note.time;
+      gain.gain.setValueAtTime(0.12, time);
+      gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
+      
+      osc.start(time);
+      osc.stop(time + note.duration);
+      
+      this.musicOscillators.push(osc);
+    });
+  }
+  
+  createMusicLoop(notes, loopDuration, waveform = 'square', volume = 0.08) {
     if (!this.audioContext || !this.musicGainNode) return;
     
     const ctx = this.audioContext;
@@ -887,12 +1118,12 @@ class AudioManager {
           osc.connect(gain);
           gain.connect(this.musicGainNode);
           
-          osc.type = 'square';
+          osc.type = waveform;
           osc.frequency.value = note.freq;
           
           const time = startTime + note.time;
-          gain.gain.setValueAtTime(0.08, time);
-          gain.gain.setValueAtTime(0.08, time + note.duration - 0.05);
+          gain.gain.setValueAtTime(volume, time);
+          gain.gain.setValueAtTime(volume, time + note.duration - 0.05);
           gain.gain.exponentialRampToValueAtTime(0.01, time + note.duration);
           
           osc.start(time);
