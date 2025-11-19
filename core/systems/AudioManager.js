@@ -733,6 +733,12 @@ class AudioManager {
       return;
     }
     
+    // Don't restart the same music
+    if (this.currentMusic === musicName) {
+      console.log('Music already playing:', musicName);
+      return;
+    }
+    
     // Resume audio context if needed
     await this.resumeAudioContext();
     
@@ -743,9 +749,10 @@ class AudioManager {
       await this.resumeAudioContext();
     }
     
-    // Stop current music
+    // ALWAYS stop current music before starting new music
     this.stopMusic();
     
+    // Set current music AFTER stopping to prevent race conditions
     this.currentMusic = musicName;
     
     // Start new music based on name
@@ -770,6 +777,7 @@ class AudioManager {
         default:
           // No music
           console.warn('Unknown music name:', musicName);
+          this.currentMusic = null;
           break;
       }
     } catch (e) {
@@ -803,12 +811,15 @@ class AudioManager {
       { freq: 493.88, time: 3.5, duration: 0.5 }  // B
     ];
     
+    // Store music name for setTimeout callbacks
+    const currentMusicName = this.currentMusic;
+    
     // Create bass loop
     this.createMusicLoop(bassNotes, 4, 'square', 0.12);
     
     // Create melody loop (slightly delayed for depth)
     setTimeout(() => {
-      if (this.currentMusic === 'menu') {
+      if (this.currentMusic === currentMusicName) {
         this.createMusicLoop(melodyNotes, 4, 'sine', 0.08);
       }
     }, 50);
@@ -850,19 +861,22 @@ class AudioManager {
       { freq: 587.33, time: 1.5, duration: 0.5 }    // D
     ];
     
+    // Store music name for setTimeout callbacks
+    const currentMusicName = this.currentMusic;
+    
     // Create bass loop (square wave for punchier sound)
     this.createMusicLoop(bassNotes, 2, 'square', 0.15);
     
     // Create melody loop
     setTimeout(() => {
-      if (this.currentMusic === 'gameplay') {
+      if (this.currentMusic === currentMusicName) {
         this.createMusicLoop(melodyNotes, 2, 'square', 0.1);
       }
     }, 50);
     
     // Create harmony loop
     setTimeout(() => {
-      if (this.currentMusic === 'gameplay') {
+      if (this.currentMusic === currentMusicName) {
         this.createMusicLoop(harmonyNotes, 2, 'triangle', 0.06);
       }
     }, 100);
@@ -911,19 +925,22 @@ class AudioManager {
       { freq: 349.23, time: 1.6, duration: 0.4 }  // F
     ];
     
+    // Store music name for setTimeout callbacks
+    const currentMusicName = this.currentMusic;
+    
     // Create heavy bass loop
     this.createMusicLoop(bassNotes, 2, 'sawtooth', 0.18);
     
     // Create aggressive melody loop
     setTimeout(() => {
-      if (this.currentMusic === 'boss') {
+      if (this.currentMusic === currentMusicName) {
         this.createMusicLoop(melodyNotes, 2, 'square', 0.12);
       }
     }, 50);
     
     // Create power chord harmony
     setTimeout(() => {
-      if (this.currentMusic === 'boss') {
+      if (this.currentMusic === currentMusicName) {
         this.createMusicLoop(harmonyNotes, 2, 'sawtooth', 0.08);
       }
     }, 100);
@@ -1136,8 +1153,14 @@ class AudioManager {
     const ctx = this.audioContext;
     let startTime = ctx.currentTime;
     
+    // Store the music name at the time of loop creation to check if it's still active
+    const musicNameAtCreation = this.currentMusic;
+    
     const playLoop = () => {
-      if (this.currentMusic === null || !this.musicGainNode) return;
+      // Check if this music is still supposed to be playing
+      if (this.currentMusic !== musicNameAtCreation || this.currentMusic === null || !this.musicGainNode) {
+        return;
+      }
       
       if (ctx.state !== 'running') {
         console.warn('Audio context stopped running, stopping music loop');
@@ -1168,11 +1191,17 @@ class AudioManager {
         
         startTime += loopDuration;
         
-        // Schedule next loop
-        setTimeout(playLoop, loopDuration * 1000 - 100);
+        // Schedule next loop - check again before scheduling
+        setTimeout(() => {
+          if (this.currentMusic === musicNameAtCreation) {
+            playLoop();
+          }
+        }, loopDuration * 1000 - 100);
       } catch (e) {
         console.error('Error in music loop:', e);
-        this.currentMusic = null;
+        if (this.currentMusic === musicNameAtCreation) {
+          this.currentMusic = null;
+        }
       }
     };
     
@@ -1180,14 +1209,18 @@ class AudioManager {
   }
   
   stopMusic() {
+    console.log('Stopping music, current music was:', this.currentMusic);
+    
+    // Clear current music first to stop any pending loops
     this.currentMusic = null;
     
     // Stop all music oscillators
     this.musicOscillators.forEach(osc => {
       try {
         osc.stop();
+        osc.disconnect();
       } catch (e) {
-        // Already stopped
+        // Already stopped or disconnected
       }
     });
     this.musicOscillators = [];
