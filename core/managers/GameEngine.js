@@ -1702,8 +1702,8 @@ class GameEngine {
     this.projectiles.forEach(proj => {
       if (!proj.active) return;
       
-      // Player projectiles hitting enemies
-      if (proj.owner instanceof Weapon && proj.owner === this.player.getCurrentWeapon()) {
+      // Player projectiles hitting enemies (both ranged and melee weapons)
+      if (proj.owner instanceof Weapon && (proj.owner === this.player.getCurrentWeapon() || proj.owner === this.player.meleeWeapon)) {
         this.enemies.forEach(enemy => {
           if (enemy.active && proj.active && proj.collidesWith(enemy)) {
             const killed = enemy.takeDamage(proj.damage);
@@ -1720,6 +1720,8 @@ class GameEngine {
             // Play hit sound - explosive projectiles get explosion sound
             if (proj.isExplosive) {
               this.audioManager.playSound('explosion', 0.6);
+            } else if (proj.owner && proj.owner.isMelee) {
+              this.audioManager.playSound('melee_hit', 0.5);
             } else {
               this.audioManager.playSound('enemy_hit', 0.3);
             }

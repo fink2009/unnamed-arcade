@@ -211,8 +211,6 @@ class MeleeWeapon extends Weapon {
       return null;
     }
 
-    this.lastFireTime = currentTime;
-
     // Calculate direction
     const dx = targetX - x;
     const dy = targetY - y;
@@ -222,6 +220,9 @@ class MeleeWeapon extends Weapon {
     if (dist > this.meleeRange) {
       return null; // Target out of range, no attack
     }
+    
+    // Only set cooldown if we're actually attacking
+    this.lastFireTime = currentTime;
     
     let vx, vy;
     if (dist === 0) {
