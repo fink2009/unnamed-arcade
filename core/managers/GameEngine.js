@@ -1148,9 +1148,11 @@ class GameEngine {
         
         // Melee Attack (melee weapons - right click or F key)
         if (this.inputManager.isMouseButtonPressed(2) || this.inputManager.isKeyPressed('f') || this.inputManager.isKeyPressed('F')) {
-          const mousePos = this.inputManager.getMousePosition();
-          const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
-          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime, true);
+          // For melee attacks, use player's facing direction instead of mouse position
+          // Target is set at 50 pixels in front of player (within melee range)
+          const meleeTargetX = this.player.x + this.player.width / 2 + (this.player.facing * 50);
+          const meleeTargetY = this.player.y + this.player.height / 2;
+          const result = this.player.shoot(meleeTargetX, meleeTargetY, this.currentTime, true);
           
           if (result) {
             // Create melee slash visual effect

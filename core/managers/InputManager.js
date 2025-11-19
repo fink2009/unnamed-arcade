@@ -37,6 +37,11 @@ class InputManager {
     window.addEventListener('mouseup', (e) => {
       this.mouseButtons[e.button] = false;
     });
+
+    // Prevent context menu on right-click (button 2) so it doesn't interfere with gameplay
+    window.addEventListener('contextmenu', (e) => {
+      e.preventDefault();
+    });
   }
 
   isKeyPressed(key) {
