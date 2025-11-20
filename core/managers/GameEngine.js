@@ -86,7 +86,7 @@ class GameEngine {
     this.showFPS = false;
     this.showHelp = false; // Toggle help overlay
     this.cameraSmoothness = 0.1; // 0.05 = smooth, 0.3 = snappy
-    this.crosshairStyle = 'cross'; // cross, dot, circle, none
+    this.crosshairStyle = 'none'; // cross, dot, circle, none - set to none since shooting is direction-based
     this.hudOpacity = 0.9;
     this.colorBlindMode = 'none'; // none, protanopia, deuteranopia, tritanopia
     this.autoReload = true;
@@ -1118,9 +1118,11 @@ class GameEngine {
       if (this.player && this.player.active) {
         // Shooting (ranged weapons - left click)
         if (this.inputManager.isMouseButtonPressed(0)) {
-          const mousePos = this.inputManager.getMousePosition();
-          const worldPos = this.camera.screenToWorld(mousePos.x, mousePos.y);
-          const result = this.player.shoot(worldPos.x, worldPos.y, this.currentTime, false);
+          // Shoot in the direction the player is facing instead of mouse position
+          const shootDistance = 1000; // Distance to shoot in facing direction
+          const targetX = this.player.x + this.player.width / 2 + (this.player.facing * shootDistance);
+          const targetY = this.player.y + this.player.height / 2;
+          const result = this.player.shoot(targetX, targetY, this.currentTime, false);
           
           if (result) {
             // Play weapon-specific sound

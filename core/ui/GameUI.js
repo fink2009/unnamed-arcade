@@ -403,7 +403,7 @@ class GameUI {
         ['C/Ctrl - Dodge Roll', '#00ff00'],
         ['', ''],
         ['COMBAT', '#ffff00'],
-        ['Mouse - Aim & Shoot', '#00ff00'],
+        ['Left Click - Shoot', '#00ff00'],
         ['F/RClick - Melee Attack', '#00ff00'],
         ['V - Block/Parry', '#00ff00'],
         ['R - Reload', '#00ff00'],
@@ -411,6 +411,7 @@ class GameUI {
         ['I - Inventory (TAB=switch)', '#00ff00'],
         ['', ''],
         ['TIPS', '#ffff00'],
+        ['• Shoots in direction you face', '#888'],
         ['• Find melee weapons for combos', '#888'],
         ['• Perfect parry deflects projectiles', '#888'],
         ['• Chain kills for combo bonuses', '#888'],
@@ -740,7 +741,8 @@ class GameUI {
       ctx.font = '18px monospace';
       ctx.textAlign = 'left';
       
-      const controls = [
+      // Split controls into two columns to fit on screen
+      const leftControls = [
         'MOVEMENT:',
         '  A/D or Arrow Keys - Move Left/Right',
         '  W/Space - Jump',
@@ -748,14 +750,15 @@ class GameUI {
         '  C/Ctrl - Dodge Roll',
         '',
         'COMBAT:',
-        '  Mouse - Aim',
         '  Left Click - Shoot (Ranged)',
         '  Right Click/F - Melee Attack',
         '  V - Block/Parry (Melee)',
         '  R - Reload',
         '  E/Q - Special Ability',
-        '  1/2/3/4 - Switch Weapons',
-        '',
+        '  1/2/3/4 - Switch Weapons'
+      ];
+      
+      const rightControls = [
         'INVENTORY:',
         '  I - Open Inventory',
         '  TAB - Switch Pages (Ranged/Melee)',
@@ -766,20 +769,39 @@ class GameUI {
         '  H - Toggle Help'
       ];
       
-      const startX = 250;
-      let startY = 150;
+      // Left column
+      const leftX = 100;
+      let leftY = 150;
       
-      controls.forEach((line, i) => {
+      leftControls.forEach((line, i) => {
         if (line === '') {
-          startY += 10;
+          leftY += 10;
         } else if (line.endsWith(':')) {
           ctx.fillStyle = '#ffff00';
-          ctx.fillText(line, startX, startY);
-          startY += 30;
+          ctx.fillText(line, leftX, leftY);
+          leftY += 30;
         } else {
           ctx.fillStyle = '#00ff00';
-          ctx.fillText(line, startX, startY);
-          startY += 25;
+          ctx.fillText(line, leftX, leftY);
+          leftY += 25;
+        }
+      });
+      
+      // Right column
+      const rightX = 650;
+      let rightY = 150;
+      
+      rightControls.forEach((line, i) => {
+        if (line === '') {
+          rightY += 10;
+        } else if (line.endsWith(':')) {
+          ctx.fillStyle = '#ffff00';
+          ctx.fillText(line, rightX, rightY);
+          rightY += 30;
+        } else {
+          ctx.fillStyle = '#00ff00';
+          ctx.fillText(line, rightX, rightY);
+          rightY += 25;
         }
       });
       
