@@ -1092,12 +1092,22 @@ class GameEngine {
     } else if (this.menuState === 'controls') {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
-        this.menuState = 'main';
+        // Return to pause menu if paused, otherwise main menu
+        if (this.state === 'paused') {
+          this.menuState = 'paused';
+        } else {
+          this.menuState = 'main';
+        }
       }
     } else if (this.menuState === 'highscores') {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
-        this.menuState = 'main';
+        // Return to pause menu if paused, otherwise main menu
+        if (this.state === 'paused') {
+          this.menuState = 'paused';
+        } else {
+          this.menuState = 'main';
+        }
       }
     } else if (this.state === 'menu') {
       if (this.inputManager.wasKeyPressed('1')) {
