@@ -90,6 +90,7 @@ class GameEngine {
     this.hudOpacity = 0.9;
     this.colorBlindMode = 'none'; // none, protanopia, deuteranopia, tritanopia
     this.autoReload = true;
+    this.mouseAiming = false; // Toggle between mouse tracking (true) and directional (false) aiming
     this.bloodEffects = true; // Toggle blood/gore effects
     this.enemyAggression = 1.0; // Enemy behavior multiplier
     this.bulletSpeed = 1.0; // Projectile speed multiplier
@@ -1058,24 +1059,27 @@ class GameEngine {
         if (this.inputManager.wasKeyPressed('1')) {
           this.autoReload = !this.autoReload;
         } else if (this.inputManager.wasKeyPressed('2')) {
+          this.mouseAiming = !this.mouseAiming;
+          this.audioManager.playSound('menu_navigate', 0.3);
+        } else if (this.inputManager.wasKeyPressed('3')) {
           const modes = ['none', 'protanopia', 'deuteranopia', 'tritanopia'];
           const idx = modes.indexOf(this.colorBlindMode);
           this.colorBlindMode = modes[(idx + 1) % modes.length];
-        } else if (this.inputManager.wasKeyPressed('3')) {
-          this.bloodEffects = !this.bloodEffects;
         } else if (this.inputManager.wasKeyPressed('4')) {
-          this.screenFlash = !this.screenFlash;
+          this.bloodEffects = !this.bloodEffects;
         } else if (this.inputManager.wasKeyPressed('5')) {
-          this.enemyAggression = Math.max(0.5, this.enemyAggression - 0.1);
+          this.screenFlash = !this.screenFlash;
         } else if (this.inputManager.wasKeyPressed('6')) {
-          this.enemyAggression = Math.min(2.0, this.enemyAggression + 0.1);
+          this.enemyAggression = Math.max(0.5, this.enemyAggression - 0.1);
         } else if (this.inputManager.wasKeyPressed('7')) {
-          this.bulletSpeed = Math.max(0.5, this.bulletSpeed - 0.1);
+          this.enemyAggression = Math.min(2.0, this.enemyAggression + 0.1);
         } else if (this.inputManager.wasKeyPressed('8')) {
-          this.bulletSpeed = Math.min(2.0, this.bulletSpeed + 0.1);
+          this.bulletSpeed = Math.max(0.5, this.bulletSpeed - 0.1);
         } else if (this.inputManager.wasKeyPressed('9')) {
-          this.explosionSize = Math.max(0.5, this.explosionSize - 0.1);
+          this.bulletSpeed = Math.min(2.0, this.bulletSpeed + 0.1);
         } else if (this.inputManager.wasKeyPressed('0')) {
+          this.explosionSize = Math.max(0.5, this.explosionSize - 0.1);
+        } else if (this.inputManager.wasKeyPressed('-')) {
           this.explosionSize = Math.min(2.0, this.explosionSize + 0.1);
         }
       }
@@ -1133,10 +1137,21 @@ class GameEngine {
       if (this.player && this.player.active) {
         // Shooting (ranged weapons - left click)
         if (this.inputManager.isMouseButtonPressed(0)) {
-          // Shoot in the direction the player is facing instead of mouse position
-          const shootDistance = 1000; // Distance to shoot in facing direction
-          const targetX = this.player.x + this.player.width / 2 + (this.player.facing * shootDistance);
-          const targetY = this.player.y + this.player.height / 2;
+          let targetX, targetY;
+          
+          if (this.mouseAiming) {
+            // Mouse tracking aiming: shoot towards mouse cursor position
+            const mousePos = this.inputManager.getMousePosition();
+            // Convert screen mouse position to world coordinates
+            targetX = mousePos.x + this.camera.x;
+            targetY = mousePos.y + this.camera.y;
+          } else {
+            // Directional aiming: shoot in the direction the player is facing
+            const shootDistance = 1000; // Distance to shoot in facing direction
+            targetX = this.player.x + this.player.width / 2 + (this.player.facing * shootDistance);
+            targetY = this.player.y + this.player.height / 2;
+          }
+          
           const result = this.player.shoot(targetX, targetY, this.currentTime, false);
           
           if (result) {
