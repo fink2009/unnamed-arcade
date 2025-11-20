@@ -1082,17 +1082,32 @@ class GameEngine {
       
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
-        this.menuState = 'main';
+        // Return to pause menu if paused, otherwise main menu
+        if (this.state === 'paused') {
+          this.menuState = 'paused';
+        } else {
+          this.menuState = 'main';
+        }
       }
     } else if (this.menuState === 'controls') {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
-        this.menuState = 'main';
+        // Return to pause menu if paused, otherwise main menu
+        if (this.state === 'paused') {
+          this.menuState = 'paused';
+        } else {
+          this.menuState = 'main';
+        }
       }
     } else if (this.menuState === 'highscores') {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
-        this.menuState = 'main';
+        // Return to pause menu if paused, otherwise main menu
+        if (this.state === 'paused') {
+          this.menuState = 'paused';
+        } else {
+          this.menuState = 'main';
+        }
       }
     } else if (this.state === 'menu') {
       if (this.inputManager.wasKeyPressed('1')) {
@@ -1307,9 +1322,10 @@ class GameEngine {
       
       // Handle inventory when open
       if (this.showInventory) {
-        // Switch inventory pages with Tab
-        if (this.inputManager.wasKeyPressed('Tab')) {
+        // Switch inventory pages with ] or Page Down (changed from Tab to avoid browser issues)
+        if (this.inputManager.wasKeyPressed(']') || this.inputManager.wasKeyPressed('PageDown')) {
           this.inventoryPage = (this.inventoryPage + 1) % 2;
+          this.audioManager.playSound('menu_navigate', 0.3);
         }
         
         // Select weapon based on inventory page
@@ -1379,6 +1395,10 @@ class GameEngine {
       if (this.inputManager.wasKeyPressed('Escape')) {
         this.audioManager.playSound('menu_navigate', 0.3);
         this.state = 'playing';
+      } else if (this.inputManager.wasKeyPressed('s') || this.inputManager.wasKeyPressed('S')) {
+        this.audioManager.playSound('menu_select', 0.5);
+        this.menuState = 'settings';
+        this.settingsPage = 0; // Reset to first settings page
       } else if (this.inputManager.wasKeyPressed('m') || this.inputManager.wasKeyPressed('M')) {
         this.audioManager.playSound('menu_select', 0.5);
         this.state = 'menu';

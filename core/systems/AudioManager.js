@@ -791,36 +791,65 @@ class AudioManager {
     // Ambient menu music with chord progression and melody
     const ctx = this.audioContext;
     
-    // Bass line (root notes of chord progression: Am - F - C - G)
-    const bassNotes = [
-      { freq: 110, time: 0, duration: 1 },      // A
-      { freq: 87.31, time: 1, duration: 1 },    // F
-      { freq: 130.81, time: 2, duration: 1 },   // C
-      { freq: 98, time: 3, duration: 1 }        // G
-    ];
+    // Add variation - randomly choose between two progressions
+    const variation = Math.random() > 0.5 ? 0 : 1;
     
-    // Melody notes (played on top)
-    const melodyNotes = [
-      { freq: 440, time: 0, duration: 0.5 },    // A
-      { freq: 523.25, time: 0.5, duration: 0.5 }, // C
-      { freq: 349.23, time: 1, duration: 0.5 },   // F
-      { freq: 440, time: 1.5, duration: 0.5 },    // A
-      { freq: 523.25, time: 2, duration: 0.5 },   // C
-      { freq: 587.33, time: 2.5, duration: 0.5 }, // D
-      { freq: 392, time: 3, duration: 0.5 },      // G
-      { freq: 493.88, time: 3.5, duration: 0.5 }  // B
-    ];
+    let bassNotes, melodyNotes;
+    
+    if (variation === 0) {
+      // Bass line (root notes of chord progression: Am - F - C - G)
+      bassNotes = [
+        { freq: 110, time: 0, duration: 1 },      // A
+        { freq: 87.31, time: 1, duration: 1 },    // F
+        { freq: 130.81, time: 2, duration: 1 },   // C
+        { freq: 98, time: 3, duration: 1 }        // G
+      ];
+      
+      // Melody notes (played on top)
+      melodyNotes = [
+        { freq: 440, time: 0, duration: 0.5 },    // A
+        { freq: 523.25, time: 0.5, duration: 0.5 }, // C
+        { freq: 349.23, time: 1, duration: 0.5 },   // F
+        { freq: 440, time: 1.5, duration: 0.5 },    // A
+        { freq: 523.25, time: 2, duration: 0.5 },   // C
+        { freq: 587.33, time: 2.5, duration: 0.5 }, // D
+        { freq: 392, time: 3, duration: 0.5 },      // G
+        { freq: 493.88, time: 3.5, duration: 0.5 }  // B
+      ];
+    } else {
+      // Alternative progression: Dm - Bb - F - C
+      bassNotes = [
+        { freq: 146.83, time: 0, duration: 1 },   // D
+        { freq: 116.54, time: 1, duration: 1 },   // Bb
+        { freq: 87.31, time: 2, duration: 1 },    // F
+        { freq: 130.81, time: 3, duration: 1 }    // C
+      ];
+      
+      // Alternative melody (different rhythm and notes)
+      melodyNotes = [
+        { freq: 587.33, time: 0, duration: 0.5 },   // D
+        { freq: 659.25, time: 0.5, duration: 0.5 }, // E
+        { freq: 466.16, time: 1, duration: 0.5 },   // Bb
+        { freq: 523.25, time: 1.5, duration: 0.5 }, // C
+        { freq: 349.23, time: 2, duration: 0.5 },   // F
+        { freq: 440, time: 2.5, duration: 0.5 },    // A
+        { freq: 523.25, time: 3, duration: 0.5 },   // C
+        { freq: 392, time: 3.5, duration: 0.5 }     // G
+      ];
+    }
     
     // Store music name for setTimeout callbacks
     const currentMusicName = this.currentMusic;
     
-    // Create bass loop
-    this.createMusicLoop(bassNotes, 4, 'square', 0.12);
+    // Create bass loop with slight volume variance
+    const bassVolume = 0.10 + Math.random() * 0.04; // 0.10-0.14
+    this.createMusicLoop(bassNotes, 4, 'square', bassVolume);
     
-    // Create melody loop (slightly delayed for depth)
+    // Create melody loop (slightly delayed for depth) with volume variance
     setTimeout(() => {
       if (this.currentMusic === currentMusicName) {
-        this.createMusicLoop(melodyNotes, 4, 'sine', 0.08);
+        const melodyVolume = 0.07 + Math.random() * 0.03; // 0.07-0.10
+        this.createMusicLoop(melodyNotes, 4, 'sine', melodyVolume);
       }
     }, 50);
   }
@@ -829,55 +858,118 @@ class AudioManager {
     // Energetic gameplay music - fast-paced action theme
     const ctx = this.audioContext;
     
-    // Driving bass line
-    const bassNotes = [
-      { freq: 164.81, time: 0, duration: 0.25 },    // E
-      { freq: 164.81, time: 0.25, duration: 0.25 }, // E
-      { freq: 164.81, time: 0.5, duration: 0.25 },  // E
-      { freq: 196, time: 0.75, duration: 0.25 },    // G
-      { freq: 164.81, time: 1, duration: 0.25 },    // E
-      { freq: 164.81, time: 1.25, duration: 0.25 }, // E
-      { freq: 146.83, time: 1.5, duration: 0.25 },  // D
-      { freq: 164.81, time: 1.75, duration: 0.25 }  // E
-    ];
+    // Add variation - choose between three different intensity levels
+    const variation = Math.floor(Math.random() * 3);
     
-    // Energetic melody
-    const melodyNotes = [
-      { freq: 659.25, time: 0, duration: 0.25 },    // E
-      { freq: 783.99, time: 0.25, duration: 0.25 }, // G
-      { freq: 659.25, time: 0.5, duration: 0.25 },  // E
-      { freq: 587.33, time: 0.75, duration: 0.25 }, // D
-      { freq: 659.25, time: 1, duration: 0.25 },    // E
-      { freq: 783.99, time: 1.25, duration: 0.25 }, // G
-      { freq: 880, time: 1.5, duration: 0.25 },     // A
-      { freq: 783.99, time: 1.75, duration: 0.25 }  // G
-    ];
+    let bassNotes, melodyNotes, harmonyNotes;
     
-    // Harmony notes
-    const harmonyNotes = [
-      { freq: 523.25, time: 0, duration: 0.5 },     // C
-      { freq: 493.88, time: 0.5, duration: 0.5 },   // B
-      { freq: 523.25, time: 1, duration: 0.5 },     // C
-      { freq: 587.33, time: 1.5, duration: 0.5 }    // D
-    ];
+    if (variation === 0) {
+      // Standard intensity
+      bassNotes = [
+        { freq: 164.81, time: 0, duration: 0.25 },    // E
+        { freq: 164.81, time: 0.25, duration: 0.25 }, // E
+        { freq: 164.81, time: 0.5, duration: 0.25 },  // E
+        { freq: 196, time: 0.75, duration: 0.25 },    // G
+        { freq: 164.81, time: 1, duration: 0.25 },    // E
+        { freq: 164.81, time: 1.25, duration: 0.25 }, // E
+        { freq: 146.83, time: 1.5, duration: 0.25 },  // D
+        { freq: 164.81, time: 1.75, duration: 0.25 }  // E
+      ];
+      
+      melodyNotes = [
+        { freq: 659.25, time: 0, duration: 0.25 },    // E
+        { freq: 783.99, time: 0.25, duration: 0.25 }, // G
+        { freq: 659.25, time: 0.5, duration: 0.25 },  // E
+        { freq: 587.33, time: 0.75, duration: 0.25 }, // D
+        { freq: 659.25, time: 1, duration: 0.25 },    // E
+        { freq: 783.99, time: 1.25, duration: 0.25 }, // G
+        { freq: 880, time: 1.5, duration: 0.25 },     // A
+        { freq: 783.99, time: 1.75, duration: 0.25 }  // G
+      ];
+      
+      harmonyNotes = [
+        { freq: 523.25, time: 0, duration: 0.5 },     // C
+        { freq: 493.88, time: 0.5, duration: 0.5 },   // B
+        { freq: 523.25, time: 1, duration: 0.5 },     // C
+        { freq: 587.33, time: 1.5, duration: 0.5 }    // D
+      ];
+    } else if (variation === 1) {
+      // Higher intensity - faster tempo
+      bassNotes = [
+        { freq: 146.83, time: 0, duration: 0.2 },     // D
+        { freq: 146.83, time: 0.2, duration: 0.2 },   // D
+        { freq: 174.61, time: 0.4, duration: 0.2 },   // F
+        { freq: 146.83, time: 0.6, duration: 0.2 },   // D
+        { freq: 130.81, time: 0.8, duration: 0.2 },   // C
+        { freq: 146.83, time: 1, duration: 0.2 },     // D
+        { freq: 164.81, time: 1.2, duration: 0.2 },   // E
+        { freq: 146.83, time: 1.4, duration: 0.4 }    // D
+      ];
+      
+      melodyNotes = [
+        { freq: 587.33, time: 0, duration: 0.2 },     // D
+        { freq: 698.46, time: 0.2, duration: 0.2 },   // F
+        { freq: 880, time: 0.4, duration: 0.2 },      // A
+        { freq: 698.46, time: 0.6, duration: 0.2 },   // F
+        { freq: 523.25, time: 0.8, duration: 0.2 },   // C
+        { freq: 587.33, time: 1, duration: 0.2 },     // D
+        { freq: 659.25, time: 1.2, duration: 0.2 },   // E
+        { freq: 783.99, time: 1.4, duration: 0.4 }    // G
+      ];
+      
+      harmonyNotes = [
+        { freq: 440, time: 0, duration: 0.4 },        // A
+        { freq: 523.25, time: 0.4, duration: 0.4 },   // C
+        { freq: 392, time: 0.8, duration: 0.4 },      // G
+        { freq: 493.88, time: 1.2, duration: 0.6 }    // B
+      ];
+    } else {
+      // Lower intensity - more melodic
+      bassNotes = [
+        { freq: 110, time: 0, duration: 0.3 },        // A
+        { freq: 130.81, time: 0.3, duration: 0.3 },   // C
+        { freq: 146.83, time: 0.6, duration: 0.3 },   // D
+        { freq: 164.81, time: 0.9, duration: 0.3 },   // E
+        { freq: 110, time: 1.2, duration: 0.3 },      // A
+        { freq: 98, time: 1.5, duration: 0.3 }        // G
+      ];
+      
+      melodyNotes = [
+        { freq: 440, time: 0, duration: 0.3 },        // A
+        { freq: 523.25, time: 0.3, duration: 0.3 },   // C
+        { freq: 587.33, time: 0.6, duration: 0.3 },   // D
+        { freq: 659.25, time: 0.9, duration: 0.3 },   // E
+        { freq: 440, time: 1.2, duration: 0.3 },      // A
+        { freq: 392, time: 1.5, duration: 0.3 }       // G
+      ];
+      
+      harmonyNotes = [
+        { freq: 329.63, time: 0, duration: 0.6 },     // E
+        { freq: 349.23, time: 0.6, duration: 0.6 },   // F
+        { freq: 293.66, time: 1.2, duration: 0.6 }    // D
+      ];
+    }
     
     // Store music name for setTimeout callbacks
     const currentMusicName = this.currentMusic;
     
-    // Create bass loop (square wave for punchier sound)
-    this.createMusicLoop(bassNotes, 2, 'square', 0.15);
+    // Create bass loop with volume variance
+    const bassVolume = 0.13 + Math.random() * 0.04; // 0.13-0.17
+    this.createMusicLoop(bassNotes, 2, 'square', bassVolume);
     
-    // Create melody loop
+    // Create melody loop with volume variance
     setTimeout(() => {
       if (this.currentMusic === currentMusicName) {
-        this.createMusicLoop(melodyNotes, 2, 'square', 0.1);
+        const melodyVolume = 0.09 + Math.random() * 0.03; // 0.09-0.12
+        this.createMusicLoop(melodyNotes, 2, 'square', melodyVolume);
       }
     }, 50);
     
-    // Create harmony loop
+    // Create harmony loop with volume variance
     setTimeout(() => {
       if (this.currentMusic === currentMusicName) {
-        this.createMusicLoop(harmonyNotes, 2, 'triangle', 0.06);
+        const harmonyVolume = 0.05 + Math.random() * 0.03; // 0.05-0.08
+        this.createMusicLoop(harmonyNotes, 2, 'triangle', harmonyVolume);
       }
     }, 100);
   }
@@ -886,62 +978,109 @@ class AudioManager {
     // Intense boss music - aggressive and dramatic
     const ctx = this.audioContext;
     
-    // Heavy bass line (dark and threatening)
-    const bassNotes = [
-      { freq: 110, time: 0, duration: 0.2 },      // A
-      { freq: 110, time: 0.2, duration: 0.2 },    // A
-      { freq: 116.54, time: 0.4, duration: 0.2 }, // A#
-      { freq: 110, time: 0.6, duration: 0.2 },    // A
-      { freq: 98, time: 0.8, duration: 0.2 },     // G
-      { freq: 110, time: 1, duration: 0.2 },      // A
-      { freq: 110, time: 1.2, duration: 0.2 },    // A
-      { freq: 103.83, time: 1.4, duration: 0.2 }, // G#
-      { freq: 110, time: 1.6, duration: 0.2 },    // A
-      { freq: 116.54, time: 1.8, duration: 0.2 }  // A#
-    ];
+    // Add variation - choose between two different aggressive patterns
+    const variation = Math.random() > 0.5 ? 0 : 1;
     
-    // Aggressive melody (high intensity)
-    const melodyNotes = [
-      { freq: 440, time: 0, duration: 0.15 },     // A
-      { freq: 554.37, time: 0.15, duration: 0.15 }, // C#
-      { freq: 440, time: 0.3, duration: 0.15 },   // A
-      { freq: 466.16, time: 0.45, duration: 0.15 }, // A#
-      { freq: 440, time: 0.6, duration: 0.15 },   // A
-      { freq: 392, time: 0.75, duration: 0.15 },  // G
-      { freq: 440, time: 0.9, duration: 0.2 },    // A
-      { freq: 554.37, time: 1.1, duration: 0.15 }, // C#
-      { freq: 587.33, time: 1.25, duration: 0.15 }, // D
-      { freq: 554.37, time: 1.4, duration: 0.15 }, // C#
-      { freq: 493.88, time: 1.55, duration: 0.15 }, // B
-      { freq: 440, time: 1.7, duration: 0.3 }     // A
-    ];
+    let bassNotes, melodyNotes, harmonyNotes;
     
-    // Power chord harmony
-    const harmonyNotes = [
-      { freq: 330, time: 0, duration: 0.4 },      // E (power chord)
-      { freq: 349.23, time: 0.4, duration: 0.4 }, // F
-      { freq: 293.66, time: 0.8, duration: 0.4 }, // D
-      { freq: 330, time: 1.2, duration: 0.4 },    // E
-      { freq: 349.23, time: 1.6, duration: 0.4 }  // F
-    ];
+    if (variation === 0) {
+      // Heavy bass line (dark and threatening)
+      bassNotes = [
+        { freq: 110, time: 0, duration: 0.2 },      // A
+        { freq: 110, time: 0.2, duration: 0.2 },    // A
+        { freq: 116.54, time: 0.4, duration: 0.2 }, // A#
+        { freq: 110, time: 0.6, duration: 0.2 },    // A
+        { freq: 98, time: 0.8, duration: 0.2 },     // G
+        { freq: 110, time: 1, duration: 0.2 },      // A
+        { freq: 110, time: 1.2, duration: 0.2 },    // A
+        { freq: 103.83, time: 1.4, duration: 0.2 }, // G#
+        { freq: 110, time: 1.6, duration: 0.2 },    // A
+        { freq: 116.54, time: 1.8, duration: 0.2 }  // A#
+      ];
+      
+      // Aggressive melody (high intensity)
+      melodyNotes = [
+        { freq: 440, time: 0, duration: 0.15 },     // A
+        { freq: 554.37, time: 0.15, duration: 0.15 }, // C#
+        { freq: 440, time: 0.3, duration: 0.15 },   // A
+        { freq: 466.16, time: 0.45, duration: 0.15 }, // A#
+        { freq: 440, time: 0.6, duration: 0.15 },   // A
+        { freq: 392, time: 0.75, duration: 0.15 },  // G
+        { freq: 440, time: 0.9, duration: 0.2 },    // A
+        { freq: 554.37, time: 1.1, duration: 0.15 }, // C#
+        { freq: 587.33, time: 1.25, duration: 0.15 }, // D
+        { freq: 554.37, time: 1.4, duration: 0.15 }, // C#
+        { freq: 493.88, time: 1.55, duration: 0.15 }, // B
+        { freq: 440, time: 1.7, duration: 0.3 }     // A
+      ];
+      
+      // Power chord harmony
+      harmonyNotes = [
+        { freq: 330, time: 0, duration: 0.4 },      // E (power chord)
+        { freq: 349.23, time: 0.4, duration: 0.4 }, // F
+        { freq: 293.66, time: 0.8, duration: 0.4 }, // D
+        { freq: 330, time: 1.2, duration: 0.4 },    // E
+        { freq: 349.23, time: 1.6, duration: 0.4 }  // F
+      ];
+    } else {
+      // Alternative aggressive pattern - lower, more ominous
+      bassNotes = [
+        { freq: 82.41, time: 0, duration: 0.25 },   // E (lower)
+        { freq: 82.41, time: 0.25, duration: 0.25 }, // E
+        { freq: 87.31, time: 0.5, duration: 0.25 },  // F
+        { freq: 82.41, time: 0.75, duration: 0.25 }, // E
+        { freq: 73.42, time: 1, duration: 0.25 },    // D
+        { freq: 82.41, time: 1.25, duration: 0.25 }, // E
+        { freq: 92.5, time: 1.5, duration: 0.25 },   // F#
+        { freq: 82.41, time: 1.75, duration: 0.25 }  // E
+      ];
+      
+      // More chaotic melody
+      melodyNotes = [
+        { freq: 329.63, time: 0, duration: 0.15 },   // E
+        { freq: 415.3, time: 0.15, duration: 0.15 },  // Ab
+        { freq: 493.88, time: 0.3, duration: 0.15 },  // B
+        { freq: 415.3, time: 0.45, duration: 0.15 },  // Ab
+        { freq: 329.63, time: 0.6, duration: 0.15 },  // E
+        { freq: 369.99, time: 0.75, duration: 0.15 }, // F#
+        { freq: 329.63, time: 0.9, duration: 0.2 },   // E
+        { freq: 293.66, time: 1.1, duration: 0.15 },  // D
+        { freq: 329.63, time: 1.25, duration: 0.15 }, // E
+        { freq: 369.99, time: 1.4, duration: 0.15 },  // F#
+        { freq: 415.3, time: 1.55, duration: 0.15 },  // Ab
+        { freq: 329.63, time: 1.7, duration: 0.3 }    // E
+      ];
+      
+      // Dissonant harmony
+      harmonyNotes = [
+        { freq: 246.94, time: 0, duration: 0.4 },    // B
+        { freq: 261.63, time: 0.4, duration: 0.4 },  // C
+        { freq: 220, time: 0.8, duration: 0.4 },     // A
+        { freq: 246.94, time: 1.2, duration: 0.4 },  // B
+        { freq: 277.18, time: 1.6, duration: 0.4 }   // C#
+      ];
+    }
     
     // Store music name for setTimeout callbacks
     const currentMusicName = this.currentMusic;
     
-    // Create heavy bass loop
-    this.createMusicLoop(bassNotes, 2, 'sawtooth', 0.18);
+    // Create heavy bass loop with volume variance
+    const bassVolume = 0.16 + Math.random() * 0.04; // 0.16-0.20
+    this.createMusicLoop(bassNotes, 2, 'sawtooth', bassVolume);
     
-    // Create aggressive melody loop
+    // Create aggressive melody loop with volume variance
     setTimeout(() => {
       if (this.currentMusic === currentMusicName) {
-        this.createMusicLoop(melodyNotes, 2, 'square', 0.12);
+        const melodyVolume = 0.11 + Math.random() * 0.03; // 0.11-0.14
+        this.createMusicLoop(melodyNotes, 2, 'square', melodyVolume);
       }
     }, 50);
     
-    // Create power chord harmony
+    // Create power chord harmony with volume variance
     setTimeout(() => {
       if (this.currentMusic === currentMusicName) {
-        this.createMusicLoop(harmonyNotes, 2, 'sawtooth', 0.08);
+        const harmonyVolume = 0.07 + Math.random() * 0.03; // 0.07-0.10
+        this.createMusicLoop(harmonyNotes, 2, 'sawtooth', harmonyVolume);
       }
     }, 100);
   }
