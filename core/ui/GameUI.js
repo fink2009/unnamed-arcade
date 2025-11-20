@@ -708,27 +708,30 @@ class GameUI {
         const autoReload = window.game && window.game.autoReload ? 'ON' : 'OFF';
         ctx.fillText(`1 - Auto Reload [${autoReload}]`, this.width / 2, 185);
         
+        const mouseAiming = window.game && window.game.mouseAiming ? 'MOUSE' : 'DIRECTIONAL';
+        ctx.fillText(`2 - Aiming Mode [${mouseAiming}]`, this.width / 2, 210);
+        
         const colorBlind = window.game ? window.game.colorBlindMode.toUpperCase() : 'NONE';
-        ctx.fillText(`2 - Color Blind Mode [${colorBlind}]`, this.width / 2, 210);
+        ctx.fillText(`3 - Color Blind Mode [${colorBlind}]`, this.width / 2, 235);
         
         const bloodEffects = window.game && window.game.bloodEffects ? 'ON' : 'OFF';
-        ctx.fillText(`3 - Blood Effects [${bloodEffects}]`, this.width / 2, 235);
+        ctx.fillText(`4 - Blood Effects [${bloodEffects}]`, this.width / 2, 260);
         
         const screenFlash = window.game && window.game.screenFlash ? 'ON' : 'OFF';
-        ctx.fillText(`4 - Screen Flash [${screenFlash}]`, this.width / 2, 260);
+        ctx.fillText(`5 - Screen Flash [${screenFlash}]`, this.width / 2, 285);
         
         const enemyAggro = window.game ? window.game.enemyAggression.toFixed(1) : '1.0';
-        ctx.fillText(`5/6 - Enemy Aggression: ${enemyAggro}x`, this.width / 2, 285);
+        ctx.fillText(`6/7 - Enemy Aggression: ${enemyAggro}x`, this.width / 2, 310);
         
         const bulletSpd = window.game ? window.game.bulletSpeed.toFixed(1) : '1.0';
-        ctx.fillText(`7/8 - Bullet Speed: ${bulletSpd}x`, this.width / 2, 310);
+        ctx.fillText(`8/9 - Bullet Speed: ${bulletSpd}x`, this.width / 2, 335);
         
         const explSize = window.game ? window.game.explosionSize.toFixed(1) : '1.0';
-        ctx.fillText(`9/0 - Explosion Size: ${explSize}x`, this.width / 2, 335);
+        ctx.fillText(`0/- - Explosion Size: ${explSize}x`, this.width / 2, 360);
         
         ctx.fillStyle = '#888';
         ctx.font = '12px monospace';
-        ctx.fillText('Tweak these settings to customize your experience', this.width / 2, 370);
+        ctx.fillText('Tweak these settings to customize your experience', this.width / 2, 395);
       }
       
       ctx.fillStyle = '#888';
